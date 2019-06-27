@@ -18,12 +18,12 @@ class main():
 
         self.height, self.width = self.window.getmaxyx()
 
-        self.boxes = [(0, 0, lambda x: None)]
+        self.boxes = []
+        self.addBox(0, 0)
         self.indexOfBoxes = 0
-        self.buffer = bytearray()
 
     def addBox(self, y, x, f=lambda x: None):
-        self.boxes.append((y, x, f))
+        self.boxes.append({'y': y, 'x': x, 'func': f, 'buf': bytearray()})
 
     def makeCmdLine(self):
         def runCmdLine(arg):
@@ -63,7 +63,8 @@ class main():
 
     def setPosition(self):
         try:
-            self.window.move(*self.boxes[self.indexOfBoxes][:-1])
+            box = self.boxes[self.indexOfBoxes]
+            self.window.move(box['y'], box['x'])
         except IndexError as e:
             f = open('error.log', 'w')
             f.write(str(e) + '\n')
@@ -75,22 +76,22 @@ class main():
     def processKey(self):
         k = self.captureKey()
         if type(k) == int:
-            y = self.boxes[self.indexOfBoxes][0]
-            x = self.boxes[self.indexOfBoxes][1]
-            if k == 10:
-                self.boxes[self.indexOfBoxes][2](self.buffer)
-                self.buffer = bytearray()
-            if k == 127:
-                if len(self.buffer) > 0:
-                    self.buffer = self.buffer[:-1]
-                    self.window.addstr(y, x + len(self.buffer), ' ')
-            elif k < 256:
-                self.buffer.append(k)
-                self.window.addstr(3, 0, str(x+len(self.buffer)))
-                
-                self.window.refresh()
+            box = self.boxes[self.indexOfBoxes]
 
-                self.window.addstr(y, x, self.buffer.decode())
+            if k == 10:
+                self.boxes[self.indexOfBoxes]['func'](box['buf'])
+                self.window.addstr(box['y'], box['x'], ' ' * len(box['buf']))
+
+                box['buf'] = bytearray()
+
+            elif k == 127:
+                if len(box['buf']) > 0:
+                    box['buf'] = box['buf'][:-1]
+                    self.window.addstr(box['y'], box['x'] + len(box['buf']), ' ')
+            elif k < 256:
+                box['buf'].append(k)
+                
+                self.window.addstr(box['y'], box['x'], box['buf'].decode())
             
             self.window.addstr(1, 0, str(k))
             
@@ -98,36 +99,22 @@ class main():
 
         if (k == 'up' or k == 'left') and self.indexOfBoxes > 0:
             self.indexOfBoxes -= 1
-            self.setPosition()
-            self.buffer = bytearray()
         elif (k == 'down' or k == 'right') and self.indexOfBoxes < len(self.boxes) - 1:
             self.indexOfBoxes += 1
-            self.setPosition()
-            self.buffer = bytearray()
-
-        self.setPosition()        
 
     def run(self):
-        self.window.move(0, 0)
-
         self.makeCmdLine()
 
-        self.addBox(10, 0)
+        self.window.move(0, 0)
 
-        while True:
-            a = self.processKey()
-            if a == 10:
-                break
-       
-        self.window.addstr(str([self.height, self.width]))
+        try:
+            while True:
+                self.processKey()
+                box = self.boxes[self.indexOfBoxes]
+                self.window.move(box['y'], box['x'] + len(box['buf']))
+        finally:
+            curses.endwin()
 
-        t = self.window.getstr()
-
-
-
-
-try:
+if __name__ == '__main__':
     m = main()
     m.run()
-finally:
-    curses.endwin()
