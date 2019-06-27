@@ -21,9 +21,15 @@ class main():
         self.boxes = []
         self.addBox(0, 0)
         self.indexOfBoxes = 0
+        self.labels = []
 
-    def addBox(self, y, x, f=lambda x: None):
-        self.boxes.append({'y': y, 'x': x, 'func': f, 'buf': bytearray()})
+    def addBox(self, y, x, f=lambda x: None, lim=-1, buf=''):
+        self.boxes.append({'y': y, 'x': x, 'func': f, 'buf': bytearray(buf.encode()), 'lim': lim})
+        self.window.addstr(y, x, buf)
+
+    def addLabel(self, y, x, text):
+        self.labels.append({'y': y, 'x': x, 'text': text})
+        self.window.addstr(y, x, text)
 
     def makeCmdLine(self):
         def runCmdLine(arg):
@@ -89,11 +95,12 @@ class main():
                     box['buf'] = box['buf'][:-1]
                     self.window.addstr(box['y'], box['x'] + len(box['buf']), ' ')
             elif k < 256:
-                box['buf'].append(k)
+                if box['lim'] > 0 and len(box['buf']) < box['lim']:
+                    box['buf'].append(k)
                 
-                self.window.addstr(box['y'], box['x'], box['buf'].decode())
+                    self.window.addstr(box['y'], box['x'], box['buf'].decode())
             
-            self.window.addstr(1, 0, str(k))
+            #self.window.addstr(1, 0, str(k))
             
                 
 
@@ -103,11 +110,10 @@ class main():
             self.indexOfBoxes += 1
 
     def run(self):
-        self.makeCmdLine()
-
-        self.window.move(0, 0)
-
         try:
+            self.makeCmdLine()
+
+            self.window.move(0, 0)
             while True:
                 self.processKey()
                 box = self.boxes[self.indexOfBoxes]
