@@ -19,13 +19,18 @@ class main():
         self.height, self.width = self.window.getmaxyx()
 
         self.boxes = []
-        self.addBox(0, 0)
-        self.indexOfBoxes = 0
+        self.indexOfBoxes = None
         self.labels = []
+        self.isRunning = False
 
-    def addBox(self, y, x, f=lambda x: None, lim=-1, buf=''):
-        self.boxes.append({'y': y, 'x': x, 'func': f, 'buf': bytearray(buf.encode()), 'lim': lim})
+    def addBox(self, y, x, func=lambda x: None, lim=-1, buf='', index=None):
+        box = {'y': y, 'x': x, 'func': func, 'buf': bytearray(buf.encode()), 'lim': lim}
+        if index:
+            self.boxes.insert(index, box)
+        else:
+            self.boxes.append(box)
         self.window.addstr(y, x, buf)
+        return box
 
     def addLabel(self, y, x, text):
         self.labels.append({'y': y, 'x': x, 'text': text})
@@ -85,17 +90,19 @@ class main():
             box = self.boxes[self.indexOfBoxes]
 
             if k == 10:
-                self.boxes[self.indexOfBoxes]['func'](box['buf'])
                 self.window.addstr(box['y'], box['x'], ' ' * len(box['buf']))
 
+                self.boxes[self.indexOfBoxes]['func'](box['buf'])
+                
                 box['buf'] = bytearray()
+
 
             elif k == 127:
                 if len(box['buf']) > 0:
                     box['buf'] = box['buf'][:-1]
                     self.window.addstr(box['y'], box['x'] + len(box['buf']), ' ')
             elif k < 256:
-                if box['lim'] > 0 and len(box['buf']) < box['lim']:
+                if box['lim'] < 0 or len(box['buf']) < box['lim']:
                     box['buf'].append(k)
                 
                     self.window.addstr(box['y'], box['x'], box['buf'].decode())
@@ -110,13 +117,17 @@ class main():
             self.indexOfBoxes += 1
 
     def run(self):
+        self.isRunning = True
         try:
             self.makeCmdLine()
+            self.indexOfBoxes = len(self.boxes) - 1
 
-            self.window.move(0, 0)
             while True:
                 self.processKey()
                 box = self.boxes[self.indexOfBoxes]
+                #if box['lim'] == 1:
+                #    self.window.move(box['y'], box['x'])
+                #else:
                 self.window.move(box['y'], box['x'] + len(box['buf']))
         finally:
             curses.endwin()
