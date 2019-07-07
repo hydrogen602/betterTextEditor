@@ -1,12 +1,13 @@
 
 import curses
 
-class main():
+class Main():
 
     def __init__(self):
         self.window = curses.initscr()
         curses.start_color()
         curses.use_default_colors()
+        #self.window.scrollok(True)
         curses.noecho()
 
         for i in range(0, curses.COLORS):
@@ -14,18 +15,22 @@ class main():
 
         self.height, self.width = self.window.getmaxyx()
 
-        self.__y = 0
-        self.__x = 0
+        self.y = 0
+        self.x = 0
 
         self.__buf = bytearray()
 
         self.isRunning = False
+
+        self.log = open('core.py.log', 'w')
 
     def __enter__(self):
         return self
 
     def __exit__(self, type, value, traceback):
         curses.endwin()
+        if self.log:
+            self.log.close()
 
     def captureKey(self):
         a = [self.window.getch()]
@@ -40,7 +45,12 @@ class main():
         self.window.nodelay(False)
 
         if len(a) == 1:
-            return a[0]
+            k = a[0]
+            if k == 127:
+                return 'delete'
+            elif k == 10:
+                return 'return'
+            return k
 
         if a == [27, 91, 66]:
             return 'down'
@@ -53,58 +63,51 @@ class main():
 
         return a
 
-    def setPosition(self):
-        try:
-            self.window.move(box['y'], box['x'])
-        except IndexError as e:
-            f = open('error.log', 'w')
-            f.write(str(e) + '\n')
-            f.write('self.indexOfBoxes = {:d}\n'.format(self.indexOfBoxes))
-            f.write('self.boxes = {}\n'.format(self.boxes))
-            f.close()
-            raise
+    def processKey(self, k):
 
-    def processKey(self):
-        k = self.captureKey()
-        if type(k) == int:
-            if k == 10:
-                self.__buf = bytearray()
-                k = 'down'
+        if k == 'return':
+            self.__buf = bytearray()
+            k = 'down'
+        elif k == 'delete':
+            if len(self.__buf) > 0:
+                self.__buf = self.__buf[:-1]
+                if self.x > 0:
+                    # delete prev char
+                    self.window.addstr(self.y, self.x - 1, ' ')
+                    self.x -= 1
 
-            elif k == 127:
-                if len(self.__buf) > 0:
-                    self.__buf = self.__buf[:-1]
-                    if self.__x > 0:
-                        # delete prev char
-                        self.window.addstr(self.__y, self.__x - 1, ' ')
-                        self.__x -= 1
-
-
-            elif k < 256:
+        if type(k) == int and k < 256:
                 self.__buf.append(k)
                 
-                self.window.addstr(self.__y, self.__x, bytearray([k]).decode())
+                self.window.addstr(self.y, self.x, bytearray([k]).decode())
 
-                self.__x += 1 # crashable
+                self.x += 1 # crashable
 
-        if k == 'up' and self.__y > 0:
-            self.__y -= 1
+        if k == 'up':
+            if self.y > 0:
+                self.y -= 1
+            else:
+                pass # scroll up
         elif k == 'down':
-            self.__y += 1
+            if self.y < self.height - 1:
+                self.y += 1
+            else:
+                pass # scroll down
         elif k == 'right':
-            self.__x += 1
+            self.x += 1
         elif k == 'left':
-            self.__x -= 1
+            self.x -= 1
 
     def run(self):
         self.isRunning = True
         try:
             while True:
-                self.processKey()
-                self.window.move(self.__y, self.__x)
+                k = self.captureKey()
+                self.processKey(k)
+                self.window.move(self.y, self.x)
         finally:
             curses.endwin()
 
 if __name__ == '__main__':
-    with main() as m:
+    with Main() as m:
         m.run()
