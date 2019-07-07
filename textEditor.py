@@ -1,5 +1,6 @@
 
 import core
+import time
 
 class TextRenderer(core.Main):
     """docstring for TextRenderer"""
@@ -8,6 +9,8 @@ class TextRenderer(core.Main):
         self.log.write('hi')
 
         self.lines = ['']
+
+        self.scrollY = 0
 
     def load(self, pathAndFile):
         text = None
@@ -25,28 +28,89 @@ class TextRenderer(core.Main):
             self.log.write(text[i] + '\n')
             self.print(text[i], i)
 
-    def print(self, text, row, color=16):
+    def print(self, text, row, color=16, resetX=False):
         if row == len(self.lines):
             # new line
             self.lines.append('')
-        prevText = self.lines[row]
-        col = len(prevText)
+        
+        if resetX: # start at the beginning of the line
+            prevText = ''
+            col = 0
+        else:
+            prevText = self.lines[row]
+            col = len(prevText)
+
         self.window.addstr(row, col, text, core.curses.color_pair(color))
-        self.lines[row] = prevText + text
+        if not resetX:
+            self.lines[row] = prevText + text
 
     def processKey(self, k):
 
         if k == 'return':
-            pass
+            self.y += 1
+            self.lines.insert(self.y, '')
+
+            if self.y == self.height:
+                self.y -= 1
+                self.scrollY += 1
+            
+            self.updateScreen()
+
         elif k == 'delete':
-            pass
+            if len(self.lines[self.y + self.scrollY]) > 0:
+                preSection = self.lines[self.y + self.scrollY][:self.x - 1]
+                postSection = self.lines[self.y + self.scrollY][self.x:]
+
+                self.lines[self.y + self.scrollY] = preSection + ' ' + postSection
+                self.x -= 1
+                self.updateScreen()
+            else:
+                # blank line
+                self.lines.pop(self.y + self.scrollY)
+                self.updateScreen()
+                k = 'up'
+
 
         if type(k) == int and k < 256:
-            self.__buf.append(k)
+            try:
+                char = bytearray([k]).decode()
+            except UnicodeDecodeError:
+                self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
+                return
+
+            self.lines[self.y + self.scrollY] += char
                 
-            self.window.addstr(self.y, self.x, bytearray([k]).decode())
+            self.window.addstr(self.y, self.x, char)
 
             self.x += 1 # crashable
+
+        if k == 'down' and self.y + self.scrollY < len(self.lines):
+            if self.y < self.height - 1:
+                self.y += 1
+            else:
+                self.scrollY += 1
+                self.updateScreen()
+
+        if k == 'up' and self.y + self.scrollY > 0:
+            self.log.write(f'up {self.y} {self.scrollY}\n')
+            if self.y > 0:
+                self.y -= 1
+            else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
+                self.scrollY -= 1
+                self.updateScreen()
+
+    def updateScreen(self):
+        self.window.erase()
+        self.window.refresh()
+
+        self.log.write(f'updating! {self.scrollY}\n')
+
+        for i in range(self.height):
+            if self.scrollY + i >= len(self.lines):
+                break
+            self.print(self.lines[self.scrollY + i], i, resetX=True)
+
+        
 
 if __name__ == '__main__':
     with TextRenderer() as m:
