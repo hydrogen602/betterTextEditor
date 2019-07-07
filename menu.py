@@ -1,9 +1,6 @@
 
 import curses
-
-
-import curses
-from shutil import get_terminal_size
+#from shutil import get_terminal_size
 import time
 
 # get_terminal_size((0, 0))
@@ -14,7 +11,12 @@ class main():
 
     def __init__(self):
         self.window = curses.initscr()
+        curses.start_color()
+        curses.use_default_colors()
         curses.noecho()
+
+        for i in range(0, curses.COLORS):
+            curses.init_pair(i + 1, i, -1)
 
         self.height, self.width = self.window.getmaxyx()
 
@@ -22,6 +24,12 @@ class main():
         self.indexOfBoxes = None
         self.labels = []
         self.isRunning = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        curses.endwin()
 
     def addBox(self, y, x, func=lambda x: None, lim=-1, buf='', index=None):
         box = {'y': y, 'x': x, 'func': func, 'buf': bytearray(buf.encode()), 'lim': lim}
