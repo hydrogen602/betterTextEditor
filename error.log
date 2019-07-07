@@ -1,3 +1,0 @@
-list index out of range
-self.indexOfBoxes = 2
-self.boxes = [(0, 0), (10, 0)]

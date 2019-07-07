@@ -1,8 +1,0 @@
-self.y = 3
-self.y = 4
-self.y = 5
-lowestY = 6
-self.y = 6
-lowestY = 6
-c.y = 6
-m.boxes = [{'y': 3, 'x': 1, 'func': <bound method checkable.toggle of <__main__.checkable object at 0x10c6fe940>>, 'buf': bytearray(b''), 'lim': 0}, {'y': 4, 'x': 1, 'func': <bound method checkable.toggle of <__main__.checkable object at 0x10c6fe978>>, 'buf': bytearray(b''), 'lim': 0}, {'y': 5, 'x': 1, 'func': <bound method checkable.toggle of <__main__.checkable object at 0x10c6fe9b0>>, 'buf': bytearray(b''), 'lim': 0}, {'y': 6, 'x': 1, 'func': <bound method checkable.toggle of <__main__.checkable object at 0x10c825d68>>, 'buf': bytearray(b''), 'lim': 0}, {'y': 7, 'x': 10, 'func': <function newTask at 0x10c51c1e0>, 'buf': bytearray(b''), 'lim': 20}, {'y': 21, 'x': 2, 'func': <function main.makeCmdLine.<locals>.runCmdLine at 0x10c833048>, 'buf': bytearray(b''), 'lim': -1}]
