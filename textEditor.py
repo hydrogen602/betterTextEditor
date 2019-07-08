@@ -11,6 +11,7 @@ class TextRenderer(core.Main):
         self.lines = ['']
 
         self.scrollY = 0
+        self.scrollX = 0
 
     def load(self, pathAndFile):
         text = None
@@ -53,16 +54,30 @@ class TextRenderer(core.Main):
             if self.y == self.height:
                 self.y -= 1
                 self.scrollY += 1
+
+            self.x = 0
+            self.scrollX = 0
             
             self.updateScreen()
 
         elif k == 'delete':
             if len(self.lines[self.y + self.scrollY]) > 0:
-                preSection = self.lines[self.y + self.scrollY][:self.x - 1]
-                postSection = self.lines[self.y + self.scrollY][self.x:]
+                preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX) - 1]
+                postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
 
-                self.lines[self.y + self.scrollY] = preSection + ' ' + postSection
+                self.lines[self.y + self.scrollY] = preSection + postSection
                 self.x -= 1
+
+                if self.scrollX > 0:
+                    maxWidth = self.scrollX + self.width
+                    visibleLines = self.lines[self.scrollY:self.scrollY + self.height]
+
+                    self.log.write(str(visibleLines) + '\n')
+
+                    if not any([len(line) >= maxWidth for line in visibleLines]):
+                        self.scrollX -= 1
+                        self.x += 1
+
                 self.updateScreen()
             else:
                 # blank line
@@ -78,13 +93,18 @@ class TextRenderer(core.Main):
                 self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
                 return
 
-            self.lines[self.y + self.scrollY] += char
-                
-            self.window.addstr(self.y, self.x, char)
+            preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX)]
+            postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
 
-            self.x += 1 # crashable
+            self.lines[self.y + self.scrollY] = preSection + char + postSection            
 
-        if k == 'down' and self.y + self.scrollY < len(self.lines):
+            self.updateScreen()
+
+            k = 'right'
+
+        if k == 'down' and self.y + self.scrollY < len(self.lines) - 1:
+
+
             if self.y < self.height - 1:
                 self.y += 1
             else:
@@ -99,16 +119,37 @@ class TextRenderer(core.Main):
                 self.scrollY -= 1
                 self.updateScreen()
 
+        if k == 'left' and self.x + self.scrollX > 0:
+            if self.x > 0:
+                self.x -= 1
+            else:
+                self.scrollX -= 1
+                self.updateScreen()
+
+        if k == 'right':
+            length = len(self.lines[self.y + self.scrollY])
+            if self.x + self.scrollX < length:
+                if self.x < self.width - 1:
+                    self.x += 1
+                else:
+                    self.scrollX += 1
+                    self.updateScreen()
+
+
     def updateScreen(self):
         self.window.erase()
         self.window.refresh()
 
-        self.log.write(f'updating! {self.scrollY}\n')
+        #self.log.write(f'updating! {self.scrollY}\n')
 
         for i in range(self.height):
             if self.scrollY + i >= len(self.lines):
                 break
-            self.print(self.lines[self.scrollY + i], i, resetX=True)
+
+            entireLine = self.lines[self.scrollY + i]
+            visibleLine = entireLine[self.scrollX:self.scrollX + self.width]
+
+            self.print(visibleLine, i, resetX=True)
 
         
 

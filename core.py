@@ -100,6 +100,7 @@ class Main():
 
     def run(self):
         self.isRunning = True
+        self.window.move(0, 0)
         try:
             while True:
                 k = self.captureKey()
