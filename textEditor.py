@@ -6,12 +6,14 @@ class TextRenderer(core.Main):
     """docstring for TextRenderer"""
     def __init__(self):
         super(TextRenderer, self).__init__()
-        self.log.write('hi')
+        self.log.write('hi\n')
 
         self.lines = ['']
 
         self.scrollY = 0
         self.scrollX = 0
+
+        self.lastX = 0
 
     def load(self, pathAndFile):
         text = None
@@ -24,10 +26,12 @@ class TextRenderer(core.Main):
             f.close()
 
         text = text.split('\n')
-        #log.write(f'{self.m.height}')
-        for i in range(self.height - 2):
-            self.log.write(text[i] + '\n')
-            self.print(text[i], i)
+        self.log.write(f'length: {len(text)}')
+        self.lines = []
+        for line in text:
+            self.lines.append(line)
+
+        self.updateScreen()
 
     def print(self, text, row, color=16, resetX=False):
         if row == len(self.lines):
@@ -41,27 +45,37 @@ class TextRenderer(core.Main):
             prevText = self.lines[row]
             col = len(prevText)
 
-        self.window.addstr(row, col, text, core.curses.color_pair(color))
+        if col + len(text) >= self.width:
+            visibleText = text[:self.width - col - 1]
+        else:
+            visibleText = text
+
+        self.window.addstr(row, col, visibleText, core.curses.color_pair(color))
+
         if not resetX:
             self.lines[row] = prevText + text
 
     def processKey(self, k):
 
         if k == 'return':
-            self.y += 1
-            self.lines.insert(self.y, '')
+            pre = self.lines[self.y + self.scrollY][:self.x + self.scrollX] # current line
+            post = self.lines[self.y + self.scrollY][self.x + self.scrollX:]
+
+            self.lines[self.y + self.scrollY] = pre
+            self.lines.insert(self.y + self.scrollY + 1, post)
 
             if self.y == self.height:
-                self.y -= 1
                 self.scrollY += 1
+            else:
+                self.y += 1
 
             self.x = 0
             self.scrollX = 0
-            
+
             self.updateScreen()
 
         elif k == 'delete':
-            if len(self.lines[self.y + self.scrollY]) > 0:
+            if self.x + self.scrollX > 0:
                 preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX) - 1]
                 postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
 
@@ -79,9 +93,20 @@ class TextRenderer(core.Main):
                         self.x += 1
 
                 self.updateScreen()
-            else:
+
+            elif self.y + self.scrollY > 0:
                 # blank line
-                self.lines.pop(self.y + self.scrollY)
+                remains = self.lines.pop(self.y + self.scrollY)
+
+                length = len(self.lines[self.y + self.scrollY - 1])
+
+                self.lines[self.y + self.scrollY - 1] += remains
+
+                self.x = length - self.scrollX
+                if self.x > self.width:
+                    self.x = self.width - 1
+                    self.scrollX = length - self.x
+
                 self.updateScreen()
                 k = 'up'
 
@@ -103,20 +128,51 @@ class TextRenderer(core.Main):
             k = 'right'
 
         if k == 'down' and self.y + self.scrollY < len(self.lines) - 1:
-
+            update = False
 
             if self.y < self.height - 1:
                 self.y += 1
             else:
                 self.scrollY += 1
+                update = True
+
+            #self.lastX = self.x
+            length = len(self.lines[self.y + self.scrollY])
+
+            if self.x + self.scrollX > length:
+                #self.x + self.scrollX = length
+                if self.scrollX > length:
+                    self.scrollX = length
+                    self.x = 0
+                    update = True
+                else:
+                    self.x = length - self.scrollX
+
+            if update:
                 self.updateScreen()
 
         if k == 'up' and self.y + self.scrollY > 0:
+            update = True
+
             self.log.write(f'up {self.y} {self.scrollY}\n')
             if self.y > 0:
                 self.y -= 1
             else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
                 self.scrollY -= 1
+                self.updateScreen()
+
+            length = len(self.lines[self.y + self.scrollY])
+
+            if self.x + self.scrollX > length:
+                #self.x + self.scrollX = length
+                if self.scrollX > length:
+                    self.scrollX = length
+                    self.x = 0
+                    update = True
+                else:
+                    self.x = length - self.scrollX
+
+            if update:
                 self.updateScreen()
 
         if k == 'left' and self.x + self.scrollX > 0:
@@ -134,6 +190,8 @@ class TextRenderer(core.Main):
                 else:
                     self.scrollX += 1
                     self.updateScreen()
+
+            #self.lastX = self.x + self.scrollX
 
 
     def updateScreen(self):
@@ -155,5 +213,5 @@ class TextRenderer(core.Main):
 
 if __name__ == '__main__':
     with TextRenderer() as m:
-        m.load('main.py')
+        m.load('textEditor.py')
         m.run()
