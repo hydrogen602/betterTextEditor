@@ -142,7 +142,7 @@ class TextRenderer(core.Main):
 
             length = len(self.lines[self.y + self.scrollY])
 
-            update = self.bounds()
+            update = self.bounds() or update
 
             if self.x + self.scrollX > length:
                 #self.x + self.scrollX = length
@@ -169,7 +169,7 @@ class TextRenderer(core.Main):
 
             length = len(self.lines[self.y + self.scrollY])
 
-            update = self.bounds()
+            update = self.bounds() or updateScreen
 
             if self.x + self.scrollX > length:
                 #self.x + self.scrollX = length
