@@ -15,6 +15,8 @@ class TextRenderer(core.Main):
 
         self.lastX = 0
 
+        self.lastKeyPress = { 'type': None, 'time': 0 }
+
     def load(self, pathAndFile):
         text = None
         try:
@@ -64,27 +66,22 @@ class TextRenderer(core.Main):
             'left': self.keyLeft,
             'right': self.keyRight
         }
-        
-        if k == 'return':
-            self.keyReturn()
 
-        elif k == 'delete':
-            self.keyDelete()
+        update = False
 
-        if type(k) == int and k < 256:
-            self.key(k)
+        if k in options:
+            function = options[k]
+            update = function()
 
-        if k == 'down':
-            self.keyDown()
 
-        if k == 'up':
-            self.keyUp()
+        elif type(k) == int and k < 256:
+            update = self.key(k)
 
-        if k == 'left':
-            self.keyLeft()
+        self.lastKeyPress['type'] = k
+        self.lastKeyPress['time'] = time.time()
 
-        if k == 'right':
-            self.keyRight()
+        if update:
+                self.updateScreen()
 
     def key(self, k):
         try:
@@ -98,9 +95,9 @@ class TextRenderer(core.Main):
 
         self.lines[self.y + self.scrollY] = preSection + char + postSection            
 
-        self.updateScreen()
-
         self.keyRight()
+
+        return True
 
 
     def keyReturn(self):
@@ -112,7 +109,7 @@ class TextRenderer(core.Main):
 
         self.keyRight()
 
-        self.updateScreen()
+        return True
 
 
     def keyDelete(self):
@@ -133,8 +130,6 @@ class TextRenderer(core.Main):
                     self.scrollX -= 1
                     self.x += 1
 
-            self.updateScreen()
-
         elif self.y + self.scrollY > 0:
             # blank line
             remains = self.lines.pop(self.y + self.scrollY)
@@ -145,14 +140,22 @@ class TextRenderer(core.Main):
 
             self.lines[self.y + self.scrollY] += remains
 
-            self.updateScreen()
-
         self.lastX = self.x + self.scrollX
+
+        return True
+
+
+    def isAccelerated(self, k):
+        timeDif = abs(time.time() - self.lastKeyPress['time'])
+
+        return self.lastKeyPress['type'] == k and timeDif < 0.12
 
 
     def keyDown(self):
         if not self.y + self.scrollY < len(self.lines) - 1:
             return
+
+        self.log.write(f'time stamp {time.time():.2f}\n')
 
         update = False
 
@@ -162,7 +165,10 @@ class TextRenderer(core.Main):
             self.scrollY += 1
             update = True
 
-        self.bounds(update)
+        if self.bounds():
+            update = True
+
+        return update
 
 
     def keyUp(self):
@@ -177,7 +183,10 @@ class TextRenderer(core.Main):
             self.scrollY -= 1
             update = True
 
-        self.bounds(update)     
+        if self.bounds():
+            update = True    
+
+        return update
 
 
     def keyLeft(self):
@@ -208,36 +217,42 @@ class TextRenderer(core.Main):
 
         self.lastX = self.x + self.scrollX
 
-        if update:
-            self.updateScreen()
+        return update
 
 
     def keyRight(self):
         length = len(self.lines[self.y + self.scrollY])
+
+        update = False
         
         if self.x + self.scrollX < length:
             if self.x < self.width - 1:
                 self.x += 1
             else:
                 self.scrollX += 1
-                self.updateScreen()
+                update = True
         else:
             # next line
+
+            value = self.keyDown()
+            if value:
+                update = True
+
+            if value == None:
+                return
+
             self.x = 0
             self.scrollX = 0
 
-            if self.y < self.height - 1:
-                self.y += 1
-            else:
-                self.scrollY += 1
-
-            self.updateScreen()
-
         self.lastX = self.x + self.scrollX
 
+        return update
 
-    def bounds(self, update):
+
+    def bounds(self):
         self.x = self.lastX - self.scrollX
+
+        update = False
 
         length = len(self.lines[self.y + self.scrollY])
 
@@ -260,8 +275,7 @@ class TextRenderer(core.Main):
             else:
                 self.x = length - self.scrollX
 
-        if update:
-            self.updateScreen()
+        return update
 
 
     def updateScreen(self):
@@ -285,3 +299,5 @@ if __name__ == '__main__':
     with TextRenderer() as m:
         m.load('main.py')
         m.run()
+
+
