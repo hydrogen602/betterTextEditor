@@ -140,19 +140,9 @@ class TextRenderer(core.Main):
                 self.scrollY += 1
                 update = True
 
-            #self.lastX = self.x
             length = len(self.lines[self.y + self.scrollY])
 
-            self.x = self.lastX - self.scrollX
-            if self.x < 0:
-                self.scrollX -= abs(self.x)
-                self.x = 0
-                update = True
-
-            elif self.x >= self.width:
-                self.scrollX += self.x - self.width 
-                self.x = self.width - 1
-                update = True
+            update = self.bounds()
 
             if self.x + self.scrollX > length:
                 #self.x + self.scrollX = length
@@ -169,7 +159,7 @@ class TextRenderer(core.Main):
         if k == 'up' and self.y + self.scrollY > 0:
             update = False
 
-            self.log.write(f'up {self.y} {self.scrollY}\n')
+            #self.log.write(f'up {self.y} {self.scrollY}\n')
 
             if self.y > 0:
                 self.y -= 1
@@ -179,15 +169,7 @@ class TextRenderer(core.Main):
 
             length = len(self.lines[self.y + self.scrollY])
 
-            self.x = self.lastX - self.scrollX
-            if self.x < 0:
-                self.scrollX -= abs(self.x)
-                self.x = 0
-                update = True
-            elif self.x >= self.width:
-                self.scrollX += self.x - self.width 
-                self.x = self.width - 1
-                update = True
+            update = self.bounds()
 
             if self.x + self.scrollX > length:
                 #self.x + self.scrollX = length
@@ -231,17 +213,28 @@ class TextRenderer(core.Main):
     def bounds(self):
         self.x = self.lastX - self.scrollX
 
+        update = False
+
         if self.x < 0:
             self.scrollX -= abs(self.x)
             self.x = 0
-            return True
+            update = True
 
-        if self.x >= self.width:
+        elif self.x >= self.width:
             self.scrollX += self.x - self.width 
             self.x = self.width - 1
-            return True
+            update = True
 
-        return False
+        # if self.x + self.scrollX > length:
+        #     #self.x + self.scrollX = length
+        #     if self.scrollX > length:
+        #         self.scrollX = length
+        #         self.x = 0
+        #         update = True
+        #     else:
+        #         self.x = length - self.scrollX
+
+        return update
 
     def updateScreen(self):
         self.window.erase()
