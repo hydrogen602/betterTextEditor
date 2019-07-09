@@ -157,57 +157,66 @@ class TextRenderer(core.Main):
             self.bounds(update)
 
         if k == 'left':
-            update = False
-
-            if self.x + self.scrollX > 0:
-                if self.x > 0:
-                    self.x -= 1
-                else:
-                    self.scrollX -= 1
-                    update = True
-
-            elif self.y + self.scrollY > 0:
-                # last line
-                if self.y > 0:
-                    self.y -= 1
-                else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
-                    self.scrollY -= 1
-                    update = True
-
-                length = len(self.lines[self.y + self.scrollY])
-
-                self.x = length - self.scrollX
-                if self.x > self.width:
-                    self.x = self.width - 1
-                    self.scrollX = length - self.x
-                    update = True
-
-            self.lastX = self.x + self.scrollX
-
-            if update:
-                self.updateScreen()
+            self.keyLeft()
 
         if k == 'right':
-            length = len(self.lines[self.y + self.scrollY])
-            if self.x + self.scrollX < length:
-                if self.x < self.width - 1:
-                    self.x += 1
-                else:
-                    self.scrollX += 1
-                    self.updateScreen()
+            self.keyRight()
+
+
+    def keyLeft(self):
+        update = False
+
+        if self.x + self.scrollX > 0:
+            if self.x > 0:
+                self.x -= 1
             else:
-                # next line
-                self.x = 0
-                self.scrollX = 0
+                self.scrollX -= 1
+                update = True
 
-                if self.y < self.height - 1:
-                    self.y += 1
-                else:
-                    self.scrollY += 1
+        elif self.y + self.scrollY > 0:
+            # last line
+            if self.y > 0:
+                self.y -= 1
+            else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
+                self.scrollY -= 1
+                update = True
 
+            length = len(self.lines[self.y + self.scrollY])
+
+            self.x = length - self.scrollX
+            if self.x > self.width:
+                self.x = self.width - 1
+                self.scrollX = length - self.x
+                update = True
+
+        self.lastX = self.x + self.scrollX
+
+        if update:
+            self.updateScreen()
+
+
+    def keyRight(self):
+        length = len(self.lines[self.y + self.scrollY])
+        
+        if self.x + self.scrollX < length:
+            if self.x < self.width - 1:
+                self.x += 1
+            else:
+                self.scrollX += 1
                 self.updateScreen()
+        else:
+            # next line
+            self.x = 0
+            self.scrollX = 0
 
-            self.lastX = self.x + self.scrollX
+            if self.y < self.height - 1:
+                self.y += 1
+            else:
+                self.scrollY += 1
+
+            self.updateScreen()
+
+        self.lastX = self.x + self.scrollX
 
 
     def bounds(self, update):
@@ -257,5 +266,5 @@ class TextRenderer(core.Main):
 
 if __name__ == '__main__':
     with TextRenderer() as m:
-        m.load('textEditor.py')
+        m.load('main.py')
         m.run()

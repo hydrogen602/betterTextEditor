@@ -21,4 +21,3 @@ class renderer:
 
     def println(self, text):
         print(text, end='\n')
-
