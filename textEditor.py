@@ -7,7 +7,6 @@ class TextEditor(textRenderer.TextRenderer):
     def __init__(self):
         super(TextEditor, self).__init__()
 
-
     def processKey(self, k):
         options = {
             'return': self.keyReturn,
@@ -98,7 +97,7 @@ class TextEditor(textRenderer.TextRenderer):
 
 if __name__ == '__main__':
     with TextEditor() as m:
-        m.load('main.py')
+        m.load('TextEditor.py')
         m.run()
 
 

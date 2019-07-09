@@ -92,17 +92,25 @@ class TextRenderer(core.Main):
 
 
     def keyDown(self):
-        if not self.y + self.scrollY < len(self.lines) - 1:
+        if self.isAccelerated('down'):
+            step = 3
+        else:
+            step = 1
+
+        if not self.y + self.scrollY < len(self.lines) - step:
             return
 
-        self.log.write(f'time stamp {time.time():.2f}\n')
+        # self.log.write(f'time: {time.time():.2f}\n')
+        # self.log.write(f'step: {step}\n')
+        # self.log.write(f'scrollY: {self.scrollY}\n\n')
 
         update = False
 
-        if self.y < self.height - 1:
-            self.y += 1
+        if self.y < self.height - step:
+            self.y += step
         else:
-            self.scrollY += 1
+            self.scrollY += step - (self.height - self.y - 1)
+            self.y = self.height - 1
             update = True
 
         if self.bounds():
@@ -112,15 +120,25 @@ class TextRenderer(core.Main):
 
 
     def keyUp(self):
-        if not self.y + self.scrollY > 0:
+        if self.isAccelerated('up'):
+            step = 3
+        else:
+            step = 1
+
+        # self.log.write(f'time: {time.time():.2f}\n')
+        # self.log.write(f'step: {step}\n')
+        # self.log.write(f'scrollY: {self.scrollY}\n\n')
+
+        if not self.y + self.scrollY > step - 1:
             return
 
         update = False
 
-        if self.y > 0:
-            self.y -= 1
+        if self.y > step - 1:
+            self.y -= step
         else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
-            self.scrollY -= 1
+            self.scrollY -= step - self.y
+            self.y = 0
             update = True
 
         if self.bounds():
