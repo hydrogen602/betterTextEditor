@@ -64,14 +64,16 @@ class TextRenderer(core.Main):
             self.lines[self.y + self.scrollY] = pre
             self.lines.insert(self.y + self.scrollY + 1, post)
 
-            if self.y == self.height:
-                self.scrollY += 1
-            else:
-                self.y += 1
+            # if self.y == self.height:
+            #     self.scrollY += 1
+            # else:
+            #     self.y += 1
 
             self.x = 0
             self.scrollX = 0
             self.lastX = 0
+
+            self.keyDown()
 
             self.updateScreen()
 
@@ -101,16 +103,11 @@ class TextRenderer(core.Main):
 
                 length = len(self.lines[self.y + self.scrollY - 1])
 
-                self.lines[self.y + self.scrollY - 1] += remains
+                self.keyLeft()
 
-                self.x = length - self.scrollX
-                if self.x > self.width:
-                    self.x = self.width - 1
-                    self.scrollX = length - self.x
+                self.lines[self.y + self.scrollY] += remains
 
                 self.updateScreen()
-
-                k = 'up'
 
             self.lastX = self.x + self.scrollX
 
@@ -129,38 +126,50 @@ class TextRenderer(core.Main):
 
             self.updateScreen()
 
-            k = 'right'
+            self.keyRight()
 
 
-        if k == 'down' and self.y + self.scrollY < len(self.lines) - 1:
-            update = False
+        if k == 'down':
+            self.keyDown()
 
-            if self.y < self.height - 1:
-                self.y += 1
-            else:
-                self.scrollY += 1
-                update = True
-
-            self.bounds(update)
-
-        if k == 'up' and self.y + self.scrollY > 0:
-            update = False
-
-            #self.log.write(f'up {self.y} {self.scrollY}\n')
-
-            if self.y > 0:
-                self.y -= 1
-            else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
-                self.scrollY -= 1
-                update = True
-
-            self.bounds(update)
+        if k == 'up':
+            self.keyUp()
 
         if k == 'left':
             self.keyLeft()
 
         if k == 'right':
             self.keyRight()
+
+
+    def keyDown(self):
+        if not self.y + self.scrollY < len(self.lines) - 1:
+            return
+
+        update = False
+
+        if self.y < self.height - 1:
+            self.y += 1
+        else:
+            self.scrollY += 1
+            update = True
+
+        self.bounds(update)
+
+
+    def keyUp(self):
+        if not self.y + self.scrollY > 0:
+            return
+
+        update = False
+
+        if self.y > 0:
+            self.y -= 1
+        else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
+            self.scrollY -= 1
+            update = True
+
+        self.bounds(update)     
 
 
     def keyLeft(self):
