@@ -140,18 +140,18 @@ class TextRenderer(core.Main):
                 self.scrollY += 1
                 update = True
 
-            length = len(self.lines[self.y + self.scrollY])
+            # length = len(self.lines[self.y + self.scrollY])
 
             update = self.bounds() or update
 
-            if self.x + self.scrollX > length:
-                #self.x + self.scrollX = length
-                if self.scrollX > length:
-                    self.scrollX = length
-                    self.x = 0
-                    update = True
-                else:
-                    self.x = length - self.scrollX
+            # if self.x + self.scrollX > length:
+            #     #self.x + self.scrollX = length
+            #     if self.scrollX > length:
+            #         self.scrollX = length
+            #         self.x = 0
+            #         update = True
+            #     else:
+            #         self.x = length - self.scrollX
 
             if update:
                 self.updateScreen()
@@ -167,18 +167,18 @@ class TextRenderer(core.Main):
                 self.scrollY -= 1
                 update = True
 
-            length = len(self.lines[self.y + self.scrollY])
+            # length = len(self.lines[self.y + self.scrollY])
 
-            update = self.bounds() or updateScreen
+            update = self.bounds() or update
 
-            if self.x + self.scrollX > length:
-                #self.x + self.scrollX = length
-                if self.scrollX > length:
-                    self.scrollX = length
-                    self.x = 0
-                    update = True
-                else:
-                    self.x = length - self.scrollX
+            # if self.x + self.scrollX > length:
+            #     #self.x + self.scrollX = length
+            #     if self.scrollX > length:
+            #         self.scrollX = length
+            #         self.x = 0
+            #         update = True
+            #     else:
+            #         self.x = length - self.scrollX
 
             if update:
                 self.updateScreen()
@@ -215,6 +215,8 @@ class TextRenderer(core.Main):
 
         update = False
 
+        length = len(self.lines[self.y + self.scrollY])
+
         if self.x < 0:
             self.scrollX -= abs(self.x)
             self.x = 0
@@ -225,14 +227,14 @@ class TextRenderer(core.Main):
             self.x = self.width - 1
             update = True
 
-        # if self.x + self.scrollX > length:
-        #     #self.x + self.scrollX = length
-        #     if self.scrollX > length:
-        #         self.scrollX = length
-        #         self.x = 0
-        #         update = True
-        #     else:
-        #         self.x = length - self.scrollX
+        if self.x + self.scrollX > length:
+            #self.x + self.scrollX = length
+            if self.scrollX > length:
+                self.scrollX = length
+                self.x = 0
+                update = True
+            else:
+                self.x = length - self.scrollX
 
         return update
 
