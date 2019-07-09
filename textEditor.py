@@ -130,6 +130,7 @@ class TextRenderer(core.Main):
 
             k = 'right'
 
+
         if k == 'down' and self.y + self.scrollY < len(self.lines) - 1:
             update = False
 
@@ -147,6 +148,7 @@ class TextRenderer(core.Main):
                 self.scrollX -= abs(self.x)
                 self.x = 0
                 update = True
+
             elif self.x >= self.width:
                 self.scrollX += self.x - self.width 
                 self.x = self.width - 1
@@ -216,11 +218,30 @@ class TextRenderer(core.Main):
                 else:
                     self.scrollX += 1
                     self.updateScreen()
+            else:
+                self.x = 0
+                self.scrollX = 0
+                # down
+                self.updateScreen()
 
             self.lastX = self.x + self.scrollX
 
             #self.lastX = self.x + self.scrollX
 
+    def bounds(self):
+        self.x = self.lastX - self.scrollX
+
+        if self.x < 0:
+            self.scrollX -= abs(self.x)
+            self.x = 0
+            return True
+
+        if self.x >= self.width:
+            self.scrollX += self.x - self.width 
+            self.x = self.width - 1
+            return True
+
+        return False
 
     def updateScreen(self):
         self.window.erase()
