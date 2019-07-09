@@ -200,11 +200,8 @@ class TextRenderer(core.Main):
                 update = True
 
         elif self.y + self.scrollY > 0:
-            # last line
-            if self.y > 0:
-                self.y -= 1
-            else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
-                self.scrollY -= 1
+            # last character
+            if self.keyUp():
                 update = True
 
             length = len(self.lines[self.y + self.scrollY])
@@ -293,7 +290,7 @@ class TextRenderer(core.Main):
 
             self.print(visibleLine, i, resetX=True)
 
-        
+
 
 if __name__ == '__main__':
     with TextRenderer() as m:
