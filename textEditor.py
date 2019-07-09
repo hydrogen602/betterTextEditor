@@ -71,6 +71,7 @@ class TextRenderer(core.Main):
 
             self.x = 0
             self.scrollX = 0
+            self.lastX = 0
 
             self.updateScreen()
 
@@ -110,6 +111,8 @@ class TextRenderer(core.Main):
                 self.updateScreen()
                 k = 'up'
 
+            self.lastX = self.x + self.scrollX
+
 
         if type(k) == int and k < 256:
             try:
@@ -139,6 +142,16 @@ class TextRenderer(core.Main):
             #self.lastX = self.x
             length = len(self.lines[self.y + self.scrollY])
 
+            self.x = self.lastX - self.scrollX
+            if self.x < 0:
+                self.scrollX -= abs(self.x)
+                self.x = 0
+                update = True
+            elif self.x >= self.width:
+                self.scrollX += self.x - self.width 
+                self.x = self.width - 1
+                update = True
+
             if self.x + self.scrollX > length:
                 #self.x + self.scrollX = length
                 if self.scrollX > length:
@@ -152,16 +165,27 @@ class TextRenderer(core.Main):
                 self.updateScreen()
 
         if k == 'up' and self.y + self.scrollY > 0:
-            update = True
+            update = False
 
             self.log.write(f'up {self.y} {self.scrollY}\n')
+
             if self.y > 0:
                 self.y -= 1
             else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
                 self.scrollY -= 1
-                self.updateScreen()
+                update = True
 
             length = len(self.lines[self.y + self.scrollY])
+
+            self.x = self.lastX - self.scrollX
+            if self.x < 0:
+                self.scrollX -= abs(self.x)
+                self.x = 0
+                update = True
+            elif self.x >= self.width:
+                self.scrollX += self.x - self.width 
+                self.x = self.width - 1
+                update = True
 
             if self.x + self.scrollX > length:
                 #self.x + self.scrollX = length
@@ -182,6 +206,8 @@ class TextRenderer(core.Main):
                 self.scrollX -= 1
                 self.updateScreen()
 
+            self.lastX = self.x + self.scrollX
+
         if k == 'right':
             length = len(self.lines[self.y + self.scrollY])
             if self.x + self.scrollX < length:
@@ -190,6 +216,8 @@ class TextRenderer(core.Main):
                 else:
                     self.scrollX += 1
                     self.updateScreen()
+
+            self.lastX = self.x + self.scrollX
 
             #self.lastX = self.x + self.scrollX
 
