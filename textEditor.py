@@ -56,78 +56,23 @@ class TextRenderer(core.Main):
             self.lines[row] = prevText + text
 
     def processKey(self, k):
-
+        options = {
+            'return': self.keyReturn,
+            'delete': self.keyDelete,
+            'down': self.keyDown,
+            'up': self.keyUp,
+            'left': self.keyLeft,
+            'right': self.keyRight
+        }
+        
         if k == 'return':
-            pre = self.lines[self.y + self.scrollY][:self.x + self.scrollX] # current line
-            post = self.lines[self.y + self.scrollY][self.x + self.scrollX:]
-
-            self.lines[self.y + self.scrollY] = pre
-            self.lines.insert(self.y + self.scrollY + 1, post)
-
-            # if self.y == self.height:
-            #     self.scrollY += 1
-            # else:
-            #     self.y += 1
-
-            self.x = 0
-            self.scrollX = 0
-            self.lastX = 0
-
-            self.keyDown()
-
-            self.updateScreen()
+            self.keyReturn()
 
         elif k == 'delete':
-            if self.x + self.scrollX > 0:
-                preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX) - 1]
-                postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
-
-                self.lines[self.y + self.scrollY] = preSection + postSection
-                self.x -= 1
-
-                if self.scrollX > 0:
-                    maxWidth = self.scrollX + self.width
-                    visibleLines = self.lines[self.scrollY:self.scrollY + self.height]
-
-                    self.log.write(str(visibleLines) + '\n')
-
-                    if not any([len(line) >= maxWidth for line in visibleLines]):
-                        self.scrollX -= 1
-                        self.x += 1
-
-                self.updateScreen()
-
-            elif self.y + self.scrollY > 0:
-                # blank line
-                remains = self.lines.pop(self.y + self.scrollY)
-
-                length = len(self.lines[self.y + self.scrollY - 1])
-
-                self.keyLeft()
-
-                self.lines[self.y + self.scrollY] += remains
-
-                self.updateScreen()
-
-            self.lastX = self.x + self.scrollX
-
+            self.keyDelete()
 
         if type(k) == int and k < 256:
-            try:
-                char = bytearray([k]).decode()
-            except UnicodeDecodeError:
-                self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
-                return
-
-            preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX)]
-            postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
-
-            self.lines[self.y + self.scrollY] = preSection + char + postSection            
-
-            self.updateScreen()
-
-            self.keyRight()
-
+            self.key(k)
 
         if k == 'down':
             self.keyDown()
@@ -140,6 +85,69 @@ class TextRenderer(core.Main):
 
         if k == 'right':
             self.keyRight()
+
+    def key(self, k):
+        try:
+            char = bytearray([k]).decode()
+        except UnicodeDecodeError:
+            self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
+            return
+
+        preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX)]
+        postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
+
+        self.lines[self.y + self.scrollY] = preSection + char + postSection            
+
+        self.updateScreen()
+
+        self.keyRight()
+
+
+    def keyReturn(self):
+        pre = self.lines[self.y + self.scrollY][:self.x + self.scrollX] # current line
+        post = self.lines[self.y + self.scrollY][self.x + self.scrollX:]
+
+        self.lines[self.y + self.scrollY] = pre
+        self.lines.insert(self.y + self.scrollY + 1, post)
+
+        self.keyRight()
+
+        self.updateScreen()
+
+
+    def keyDelete(self):
+        if self.x + self.scrollX > 0:
+            preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX) - 1]
+            postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
+
+            self.lines[self.y + self.scrollY] = preSection + postSection
+            self.x -= 1
+
+            if self.scrollX > 0:
+                maxWidth = self.scrollX + self.width
+                visibleLines = self.lines[self.scrollY:self.scrollY + self.height]
+
+                self.log.write(str(visibleLines) + '\n')
+
+                if not any([len(line) >= maxWidth for line in visibleLines]):
+                    self.scrollX -= 1
+                    self.x += 1
+
+            self.updateScreen()
+
+        elif self.y + self.scrollY > 0:
+            # blank line
+            remains = self.lines.pop(self.y + self.scrollY)
+
+            length = len(self.lines[self.y + self.scrollY - 1])
+
+            self.keyLeft()
+
+            self.lines[self.y + self.scrollY] += remains
+
+            self.updateScreen()
+
+        self.lastX = self.x + self.scrollX
 
 
     def keyDown(self):
