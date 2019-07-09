@@ -2,6 +2,10 @@
 import core
 import time
 
+# Idea: make it auto detect key methods using dir() and then run
+# them using getattr()
+
+
 class TextRenderer(core.Main):
     """docstring for TextRenderer"""
     def __init__(self):
