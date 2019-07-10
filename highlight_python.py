@@ -97,10 +97,10 @@ def getColors(line):
 
     special = None
 
-    f = open('debug.log', 'a')
+    # f = open('debug.log', 'a')
 
     t = colors[4][0]
-    f.write(f'update = {t}\n')
+    # f.write(f'update = {t}\n')
 
     for k in ls:
         if special:
@@ -112,7 +112,7 @@ def getColors(line):
 
             if k in special[2] and type_ in ['till', 'between']:
                 # end of special
-                f.write(f'ending {special}\n')
+                # f.write(f'ending {special}\n')
                 special = None
 
                 if type_ != 'between':
@@ -131,7 +131,7 @@ def getColors(line):
                 if s:
                     assert s[1] in ['till', 'between']
                     special = s
-                    f.write(f'activating {c}, key = {k}\n')
+                    # f.write(f'activating {c}, key = {k}\n')
 
                 if s and s[1] == 'between':
                     continue
@@ -141,7 +141,7 @@ def getColors(line):
         else:
             newLs.append((k, 16))
 
-    f.close()
+    # f.close()
 
     return newLs
 
