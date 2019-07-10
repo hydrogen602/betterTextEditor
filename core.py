@@ -44,6 +44,8 @@ class Main():
 
         self.window.nodelay(False)
 
+        self.log.write(str(a) + '\n')
+
         if len(a) == 1:
             k = a[0]
             if k == 127:
@@ -51,6 +53,13 @@ class Main():
             elif k == 10:
                 return 'return'
             return k
+
+        if a == [197, 147]:
+            return 'opt-q'
+        if a == [226, 137, 136]:
+            return 'opt-x'
+        if a == [195, 184]:
+            return 'opt-o'
 
         if a == [27, 91, 66]:
             return 'down'
@@ -61,7 +70,7 @@ class Main():
         if a == [27, 91, 65]:
             return 'up'
 
-        return a
+        return a # unknown
 
     def processKey(self, k):
 
@@ -102,7 +111,7 @@ class Main():
         self.isRunning = True
         self.window.move(0, 0)
         try:
-            while True:
+            while self.isRunning:
                 k = self.captureKey()
                 self.processKey(k)
                 self.window.move(self.y, self.x)

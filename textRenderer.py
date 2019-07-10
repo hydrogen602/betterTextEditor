@@ -29,13 +29,15 @@ class TextRenderer(core.Main):
         self.pathAndFile = pathAndFile
 
         text = None
+        f = None
         try:
             f = open(pathAndFile)
             text = f.read()
         except FileNotFoundError as e:
-            text = 'File Not Found'
+            text = ''
         finally:
-            f.close()
+            if f:
+                f.close()
 
         text = text.split('\n')
 

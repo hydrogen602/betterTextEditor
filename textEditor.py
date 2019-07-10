@@ -23,6 +23,14 @@ class TextEditor(textRenderer.TextRenderer):
         with open(self.pathAndFile, 'w') as f:
             f.write(text)
 
+        return False
+
+
+    def close(self):
+        # ask for save?
+
+        self.isRunning = False
+
 
     def processKey(self, k):
         options = {
@@ -31,7 +39,9 @@ class TextEditor(textRenderer.TextRenderer):
             'down': self.keyDown,
             'up': self.keyUp,
             'left': self.keyLeft,
-            'right': self.keyRight
+            'right': self.keyRight,
+            'opt-o': self.dump,
+            'opt-q': self.close
         }
 
         update = False
@@ -48,7 +58,7 @@ class TextEditor(textRenderer.TextRenderer):
         self.lastKeyPress['time'] = time.time()
 
         if update:
-                self.updateScreen()
+            self.updateScreen()
 
 
     def key(self, k):
@@ -60,6 +70,9 @@ class TextEditor(textRenderer.TextRenderer):
 
         preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX)]
         postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
+
+        if k == 9: # tab
+            char = '    ' # four spaces
 
         self.lines[self.y + self.scrollY] = preSection + char + postSection            
 
@@ -118,9 +131,9 @@ if __name__ == '__main__':
         print('usage: TextEditor file')
         sys.exit(1)
 
-    if not os.path.isfile(sys.argv[1]):
-        print('error: file not found')
-        sys.exit(1)
+    # if not os.path.isfile(sys.argv[1]):
+    #     print('error: file not found')
+    #     sys.exit(1)
 
 
     with TextEditor() as m:
