@@ -44,7 +44,7 @@ class Main():
 
         self.window.nodelay(False)
 
-        self.log.write(str(a) + '\n')
+        # self.log.write(str(a) + '\n')
 
         if len(a) == 1:
             k = a[0]

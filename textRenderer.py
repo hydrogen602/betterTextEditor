@@ -2,6 +2,10 @@
 import core
 import time
 
+import highlight_python
+
+highlight_python.init(__builtins__)
+
 # Idea: make it auto detect key methods using dir() and then run
 # them using getattr()
 
@@ -51,11 +55,57 @@ class TextRenderer(core.Main):
         self.updateScreen()
 
 
-    def print(self, text, row, color=16, resetX=False):
+    def colorPrint(self, text, row, resetX=False, fullLine=False):
+        if resetX: # start at the beginning of the line
+            prevText = ''
+            counter = 0
+        else:
+            prevText = self.lines[row]
+            counter = len(prevText)
+
         if row == len(self.lines):
             # new line
             self.lines.append('')
-        
+
+        textColorPairs = highlight_python.getColors(text)
+
+        self.log.write(str(textColorPairs) + '\n\n')
+
+        # if col + len(text) >= self.width:
+        #     visibleText = text[:self.width - col - 1]
+        # else:
+        #     visibleText = text
+
+        counter = 0
+
+        breakNow = False
+
+        for p in textColorPairs:
+            txt = p[0]
+            color = p[1]
+
+            if counter + len(txt) >= self.width:
+                # counter + len(txt) = self.width + 1
+                txt = txt[:self.width - counter - 1]
+                breakNow = True
+
+            self.window.addstr(row, counter, txt, core.curses.color_pair(color))
+
+            counter += len(txt)
+
+            if breakNow:
+                break
+
+        if fullLine:
+            filler = ' ' * (self.width - counter - 1)
+            self.window.addstr(row, counter, filler, core.curses.color_pair(16))
+
+        if not resetX:
+            self.lines[row] = prevText + text
+
+
+
+    def print(self, text, row, color=16, resetX=False):   
         if resetX: # start at the beginning of the line
             prevText = ''
             col = 0
@@ -244,8 +294,8 @@ class TextRenderer(core.Main):
 
 
     def updateScreen(self):
-        self.window.erase()
-        self.window.refresh()
+        #self.window.erase()
+        #self.window.refresh()
 
         #self.log.write(f'updating! {self.scrollY}\n')
 
@@ -256,7 +306,8 @@ class TextRenderer(core.Main):
             entireLine = self.lines[self.scrollY + i]
             visibleLine = entireLine[self.scrollX:self.scrollX + self.width]
 
-            self.print(visibleLine, i, resetX=True)
+            # self.print(visibleLine, i, resetX=True)
+            self.colorPrint(visibleLine, i, resetX=True, fullLine=True)
 
 
 

@@ -54,11 +54,11 @@ def main():
         e = editor(m)
         e.load('main.py')
         
-        #row = 2
-        #for i in range(0, 255):
-        #    col = i % m.width
-        #    row = i // m.width + 2
-        #    m.window.addstr(row, col, 'X', menu.curses.color_pair(i))
+        row = 2
+        for i in range(0, 255):
+           col = i % m.width
+           row = i // m.width + 2
+           m.window.addstr(row, col, 'X', menu.curses.color_pair(i))
 
         #e.print('def', 0, 209) #209
         #e.print(' ', 0)

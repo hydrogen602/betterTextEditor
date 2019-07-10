@@ -5,7 +5,10 @@ import os
 
 
 class TextEditor(textRenderer.TextRenderer):
-
+    '''
+    option-o to write out
+    option-q to quit
+    '''
 
     def __init__(self):
         super(TextEditor, self).__init__()
@@ -79,7 +82,7 @@ class TextEditor(textRenderer.TextRenderer):
         if k == 9:
             for _ in range(3):
                 self.keyRight()
-        
+
         self.keyRight()
 
         return True
