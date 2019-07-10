@@ -76,6 +76,10 @@ class TextEditor(textRenderer.TextRenderer):
 
         self.lines[self.y + self.scrollY] = preSection + char + postSection            
 
+        if k == 9:
+            for _ in range(3):
+                self.keyRight()
+        
         self.keyRight()
 
         return True
