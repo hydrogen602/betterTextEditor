@@ -24,6 +24,8 @@ class Main():
 
         self.log = open('core.py.log', 'w')
 
+        self.marginLeft = 0
+
     def __enter__(self):
         return self
 
@@ -112,12 +114,12 @@ class Main():
 
     def run(self):
         self.isRunning = True
-        self.window.move(0, 0)
+        self.window.move(0, self.marginLeft)
         try:
             while self.isRunning:
                 k = self.captureKey()
                 self.processKey(k)
-                self.window.move(self.y, self.x)
+                self.window.move(self.y, self.x + self.marginLeft)
         finally:
             curses.endwin()
 

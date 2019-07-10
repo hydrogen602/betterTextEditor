@@ -26,6 +26,19 @@ class TextRenderer(core.Main):
 
         self.pathAndFile = None
 
+        self.lengthOfFile = 0
+
+
+    def getMargin(self):
+        self.lengthOfFile = len(self.lines)
+        self.marginLeft = 1 + len(str(self.lengthOfFile))
+        return self.marginLeft
+
+
+    def updateDim(self):
+        self.height, self.width = self.window.getmaxyx()
+        self.width -= self.getMargin()
+
 
     def load(self, pathAndFile):
         self.pathAndFile = pathAndFile
@@ -56,7 +69,7 @@ class TextRenderer(core.Main):
     def colorPrint(self, text, row, resetX=False, fullLine=False):
         if resetX: # start at the beginning of the line
             prevText = ''
-            counter = 0
+            counter = resetX
         else:
             prevText = self.lines[row]
             counter = len(prevText)
@@ -67,14 +80,12 @@ class TextRenderer(core.Main):
 
         textColorPairs = highlight_python.getColors(text)
 
-        self.log.write(str(textColorPairs) + '\n\n')
+        #self.log.write(str(textColorPairs) + '\n\n')
 
         # if col + len(text) >= self.width:
         #     visibleText = text[:self.width - col - 1]
         # else:
         #     visibleText = text
-
-        counter = 0
 
         breakNow = False
 
@@ -106,7 +117,7 @@ class TextRenderer(core.Main):
     def print(self, text, row, color=16, resetX=False, fullLine=False):   
         if resetX: # start at the beginning of the line
             prevText = ''
-            col = 0
+            col = resetX
         else:
             prevText = self.lines[row]
             col = len(prevText)
@@ -310,17 +321,24 @@ class TextRenderer(core.Main):
         #self.log.write(f'updating! {self.scrollY}\n')
         self.updateDim()
 
-        self.log.write(f'dimensions = {self.height} x {self.width}\n')
+        # self.log.write(f'dimensions = {self.height} x {self.width}\n')
 
-        for i in range(self.height):
-            if self.scrollY + i >= len(self.lines):
+        margin = self.getMargin()
+
+        for y in range(self.height):
+            if self.scrollY + y >= len(self.lines):
                 break
 
-            entireLine = self.lines[self.scrollY + i]
+            entireLine = self.lines[self.scrollY + y]
             visibleLine = entireLine[self.scrollX:self.scrollX + self.width]
 
-            # self.print(visibleLine, i, resetX=True)
-            self.colorPrint(visibleLine, i, resetX=True, fullLine=True)
+            self.colorPrint(visibleLine, y, resetX=margin, fullLine=True)
+
+
+            lineNumber = y + self.scrollY + 1
+            self.window.addstr(y, 0, f'{lineNumber:0{margin - 1}d}|', core.curses.color_pair(16))
+            # self.log.write(f'adding line {lineNumber:0{margin - 1}d}| at {y}')
+
 
         if not endLine:
             return
@@ -336,8 +354,7 @@ class TextRenderer(core.Main):
 
         text = msg1 + buf + msg2
 
-        self.window.addstr(self.height, 0, text, core.curses.color_pair(16))
-
+        self.window.addstr(self.height, 0, text, core.curses.color_pair(0)) # 16
 
 
 if __name__ == '__main__':

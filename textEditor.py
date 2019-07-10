@@ -19,7 +19,8 @@ class TextEditor(textRenderer.TextRenderer):
     def updateDim(self):
         self.height, self.width = self.window.getmaxyx()
         self.height -= 1
-    
+        self.width -= self.getMargin()
+
 
     def dump(self):
         if not self.pathAndFile:
@@ -123,11 +124,16 @@ class TextEditor(textRenderer.TextRenderer):
             # blank line
             remains = self.lines.pop(self.y + self.scrollY)
 
-            length = len(self.lines[self.y + self.scrollY - 1])
+            #length = len(self.lines[self.y + self.scrollY - 1])
 
             self.keyLeft()
 
             self.lines[self.y + self.scrollY] += remains
+
+            if self.y + self.scrollY == len(self.lines) - 1:
+                # last line
+                self.window.erase()
+                # erase() to cleanup leftovers
 
         self.lastX = self.x + self.scrollX
 
