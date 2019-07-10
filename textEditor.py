@@ -1,11 +1,28 @@
-
 import textRenderer
 import time
+import sys
+import os
+
 
 class TextEditor(textRenderer.TextRenderer):
-    """docstring for TextEditor"""
+
+
     def __init__(self):
         super(TextEditor, self).__init__()
+
+
+    def dump(self):
+        if not self.pathAndFile:
+            self.log.write('pathAndFile not specified yet\n')
+            sys.exit(1)
+
+        # prepare
+
+        text = '\n'.join(self.lines)
+
+        with open(self.pathAndFile, 'w') as f:
+            f.write(text)
+
 
     def processKey(self, k):
         options = {
@@ -32,6 +49,7 @@ class TextEditor(textRenderer.TextRenderer):
 
         if update:
                 self.updateScreen()
+
 
     def key(self, k):
         try:
@@ -96,8 +114,17 @@ class TextEditor(textRenderer.TextRenderer):
 
 
 if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print('usage: TextEditor file')
+        sys.exit(1)
+
+    if not os.path.isfile(sys.argv[1]):
+        print('error: file not found')
+        sys.exit(1)
+
+
     with TextEditor() as m:
-        m.load('TextEditor.py')
+        m.load(sys.argv[1])
         m.run()
 
 

@@ -7,7 +7,8 @@ import time
 
 
 class TextRenderer(core.Main):
-    """docstring for TextRenderer"""
+
+
     def __init__(self):
         super(TextRenderer, self).__init__()
         self.log.write('hi\n')
@@ -21,7 +22,12 @@ class TextRenderer(core.Main):
 
         self.lastKeyPress = { 'type': None, 'time': 0 }
 
+        self.pathAndFile = None
+
+
     def load(self, pathAndFile):
+        self.pathAndFile = pathAndFile
+
         text = None
         try:
             f = open(pathAndFile)
@@ -41,6 +47,7 @@ class TextRenderer(core.Main):
             self.lines.append(line)
 
         self.updateScreen()
+
 
     def print(self, text, row, color=16, resetX=False):
         if row == len(self.lines):
@@ -63,6 +70,7 @@ class TextRenderer(core.Main):
 
         if not resetX:
             self.lines[row] = prevText + text
+
 
     def processKey(self, k):
         options = {
