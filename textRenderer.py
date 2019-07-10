@@ -1,5 +1,7 @@
 
 import core
+from core import curses
+
 import time
 
 import highlight_python
@@ -98,7 +100,7 @@ class TextRenderer(core.Main):
                 txt = txt[:self.width - counter - 1]
                 breakNow = True
 
-            self.window.addstr(row, counter, txt, core.curses.color_pair(color))
+            self.window.addstr(row, counter, txt, curses.color_pair(color))
 
             counter += len(txt)
 
@@ -107,7 +109,7 @@ class TextRenderer(core.Main):
 
         if fullLine:
             filler = ' ' * (self.width - counter - 1)
-            self.window.addstr(row, counter, filler, core.curses.color_pair(16))
+            self.window.addstr(row, counter, filler, curses.color_pair(16))
 
         if not resetX:
             self.lines[row] = prevText + text
@@ -127,12 +129,12 @@ class TextRenderer(core.Main):
         else:
             visibleText = text
 
-        self.window.addstr(row, col, visibleText, core.curses.color_pair(color))
+        self.window.addstr(row, col, visibleText, curses.color_pair(color))
 
         counter = col + len(visibleText)
         if fullLine:
             filler = ' ' * (self.width - counter - 1)
-            self.window.addstr(row, counter, filler, core.curses.color_pair(16))
+            self.window.addstr(row, counter, filler, curses.color_pair(16))
 
         if not resetX:
             self.lines[row] = prevText + text
@@ -336,7 +338,7 @@ class TextRenderer(core.Main):
 
 
             lineNumber = y + self.scrollY + 1
-            self.window.addstr(y, 0, f'{lineNumber:0{margin - 1}d}|', core.curses.color_pair(16))
+            self.window.addstr(y, 0, f'{lineNumber:0{margin - 1}d}|', curses.color_pair(16))
             # self.log.write(f'adding line {lineNumber:0{margin - 1}d}| at {y}')
 
 
@@ -354,7 +356,7 @@ class TextRenderer(core.Main):
 
         text = msg1 + buf + msg2
 
-        self.window.addstr(self.height, 0, text, core.curses.color_pair(0)) # 16
+        self.window.addstr(self.height, 0, text, curses.color_pair(0)) # 16
 
 
 if __name__ == '__main__':

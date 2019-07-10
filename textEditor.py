@@ -1,7 +1,7 @@
+
 import textRenderer
 import time
 import sys
-import os
 
 
 class TextEditor(textRenderer.TextRenderer):

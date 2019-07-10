@@ -1,0 +1,783 @@
+#!/usr/bin/env python3
+
+# 
+# this is a release file and it stuffs
+# everything from all necessary python files
+# into this one file so its easier to transfer
+# 
+
+
+import curses
+import time
+import sys
+
+class Main():
+
+    def __init__(self):
+        self.window = curses.initscr()
+        curses.start_color()
+        curses.use_default_colors()
+        #self.window.scrollok(True)
+        curses.noecho()
+
+        for i in range(0, curses.COLORS):
+            curses.init_pair(i + 1, i, -1)
+
+        self.height, self.width = self.window.getmaxyx()
+
+        self.y = 0
+        self.x = 0
+
+        self.__buf = bytearray()
+
+        self.isRunning = False
+
+        self.log = open('core.py.log', 'w')
+
+        self.marginLeft = 0
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, type, value, traceback):
+        curses.endwin()
+        if self.log:
+            self.log.close()
+
+    def updateDim(self):
+        self.height, self.width = self.window.getmaxyx()
+
+    def captureKey(self):
+        a = [self.window.getch()]
+
+        self.window.nodelay(True)
+        
+        while True:
+            i = self.window.getch()
+            if i == -1: break
+            a.append(i)
+
+        self.window.nodelay(False)
+
+        # self.log.write(str(a) + '\n')
+
+        if len(a) == 1:
+            k = a[0]
+            if k == 127:
+                return 'delete'
+            elif k == 10:
+                return 'return'
+            return k
+
+        if a == [197, 147]:
+            return 'opt-q'
+        if a == [226, 137, 136]:
+            return 'opt-x'
+        if a == [195, 184]:
+            return 'opt-o'
+
+        if a == [27, 91, 66]:
+            return 'down'
+        if a == [27, 91, 67]:
+            return 'right'
+        if a == [27, 91, 68]:
+            return 'left'
+        if a == [27, 91, 65]:
+            return 'up'
+
+        return a # unknown
+
+    def processKey(self, k):
+
+        if k == 'return':
+            self.__buf = bytearray()
+            k = 'down'
+        elif k == 'delete':
+            if len(self.__buf) > 0:
+                self.__buf = self.__buf[:-1]
+                if self.x > 0:
+                    # delete prev char
+                    self.window.addstr(self.y, self.x - 1, ' ')
+                    self.x -= 1
+
+        if type(k) == int and k < 256:
+                self.__buf.append(k)
+                
+                self.window.addstr(self.y, self.x, bytearray([k]).decode())
+
+                self.x += 1 # crashable
+
+        if k == 'up':
+            if self.y > 0:
+                self.y -= 1
+            else:
+                pass # scroll up
+        elif k == 'down':
+            if self.y < self.height - 1:
+                self.y += 1
+            else:
+                pass # scroll down
+        elif k == 'right':
+            self.x += 1
+        elif k == 'left':
+            self.x -= 1
+
+    def run(self):
+        self.isRunning = True
+        self.window.move(0, self.marginLeft)
+        try:
+            while self.isRunning:
+                k = self.captureKey()
+                self.processKey(k)
+                self.window.move(self.y, self.x + self.marginLeft)
+        finally:
+            curses.endwin()
+
+
+class TextRenderer(Main):
+
+
+    def __init__(self):
+        super(TextRenderer, self).__init__()
+        self.log.write('hi\n')
+
+        self.lines = ['']
+
+        self.scrollY = 0
+        self.scrollX = 0
+
+        self.lastX = 0
+
+        self.lastKeyPress = { 'type': None, 'time': 0 }
+
+        self.pathAndFile = None
+
+        self.lengthOfFile = 0
+
+
+    def getMargin(self):
+        self.lengthOfFile = len(self.lines)
+        self.marginLeft = 1 + len(str(self.lengthOfFile))
+        return self.marginLeft
+
+
+    def updateDim(self):
+        self.height, self.width = self.window.getmaxyx()
+        self.width -= self.getMargin()
+
+
+    def load(self, pathAndFile):
+        self.pathAndFile = pathAndFile
+
+        text = None
+        f = None
+        try:
+            f = open(pathAndFile)
+            text = f.read()
+        except FileNotFoundError as e:
+            text = ''
+        finally:
+            if f:
+                f.close()
+
+        text = text.split('\n')
+
+        self.log.write(f'loaded: {pathAndFile}\n')
+        self.log.write(f'length: {len(text)}\n')
+
+        self.lines = []
+        for line in text:
+            self.lines.append(line)
+
+        self.updateScreen()
+
+
+    def colorPrint(self, text, row, resetX=False, fullLine=False):
+        if resetX: # start at the beginning of the line
+            prevText = ''
+            counter = resetX
+        else:
+            prevText = self.lines[row]
+            counter = len(prevText)
+
+        if row == len(self.lines):
+            # new line
+            self.lines.append('')
+
+        textColorPairs = getColors(text) # highlight_python
+
+        #self.log.write(str(textColorPairs) + '\n\n')
+
+        # if col + len(text) >= self.width:
+        #     visibleText = text[:self.width - col - 1]
+        # else:
+        #     visibleText = text
+
+        breakNow = False
+
+        for p in textColorPairs:
+            txt = p[0]
+            color = p[1]
+
+            if counter + len(txt) >= self.width:
+                # counter + len(txt) = self.width + 1
+                txt = txt[:self.width - counter - 1]
+                breakNow = True
+
+            self.window.addstr(row, counter, txt, curses.color_pair(color))
+
+            counter += len(txt)
+
+            if breakNow:
+                break
+
+        if fullLine:
+            filler = ' ' * (self.width - counter - 1)
+            self.window.addstr(row, counter, filler, curses.color_pair(16))
+
+        if not resetX:
+            self.lines[row] = prevText + text
+
+
+
+    def print(self, text, row, color=16, resetX=False, fullLine=False):   
+        if resetX: # start at the beginning of the line
+            prevText = ''
+            col = resetX
+        else:
+            prevText = self.lines[row]
+            col = len(prevText)
+
+        if col + len(text) >= self.width:
+            visibleText = text[:self.width - col - 1]
+        else:
+            visibleText = text
+
+        self.window.addstr(row, col, visibleText, curses.color_pair(color))
+
+        counter = col + len(visibleText)
+        if fullLine:
+            filler = ' ' * (self.width - counter - 1)
+            self.window.addstr(row, counter, filler, curses.color_pair(16))
+
+        if not resetX:
+            self.lines[row] = prevText + text
+
+
+    def close(self):
+        # ask for save? in textEditor
+
+        self.isRunning = False
+
+
+    def processKey(self, k):
+        options = {
+            'down': self.keyDown,
+            'up': self.keyUp,
+            'left': self.keyLeft,
+            'right': self.keyRight,
+            'opt-q': self.close
+        }
+
+        update = False
+
+        if k in options:
+            function = options[k]
+            update = function()
+
+        self.lastKeyPress['type'] = k
+        self.lastKeyPress['time'] = time.time()
+
+        if update:
+            self.updateScreen()
+
+
+    def isAccelerated(self, k):
+        timeDif = abs(time.time() - self.lastKeyPress['time'])
+
+        return self.lastKeyPress['type'] == k and timeDif < 0.12
+
+
+    def keyDown(self):
+        if self.isAccelerated('down'):
+            step = 3
+        else:
+            step = 1
+
+        if not self.y + self.scrollY < len(self.lines) - step:
+            return
+
+        # self.log.write(f'time: {time.time():.2f}\n')
+        # self.log.write(f'step: {step}\n')
+        # self.log.write(f'scrollY: {self.scrollY}\n\n')
+
+        update = False
+
+        if self.y < self.height - step:
+            self.y += step
+        else:
+            self.scrollY += step - (self.height - self.y - 1)
+            self.y = self.height - 1
+            update = True
+
+        if self.bounds():
+            update = True
+
+        return update
+
+
+    def keyUp(self):
+        if self.isAccelerated('up'):
+            step = 3
+        else:
+            step = 1
+
+        # self.log.write(f'time: {time.time():.2f}\n')
+        # self.log.write(f'step: {step}\n')
+        # self.log.write(f'scrollY: {self.scrollY}\n\n')
+
+        if not self.y + self.scrollY > step - 1:
+            return
+
+        update = False
+
+        if self.y > step - 1:
+            self.y -= step
+        else: # the condition where scrollY = 0 and y = 0 is convered by the outer if statement
+            self.scrollY -= step - self.y
+            self.y = 0
+            update = True
+
+        if self.bounds():
+            update = True    
+
+        return update
+
+
+    def keyLeft(self):
+        update = False
+
+        if self.x + self.scrollX > 0:
+            if self.x > 0:
+                self.x -= 1
+            else:
+                self.scrollX -= 1
+                update = True
+
+        elif self.y + self.scrollY > 0:
+            # last character
+            if self.keyUp():
+                update = True
+
+            length = len(self.lines[self.y + self.scrollY])
+
+            self.x = length - self.scrollX
+            if self.x > self.width:
+                self.x = self.width - 1
+                self.scrollX = length - self.x
+                update = True
+
+        self.lastX = self.x + self.scrollX
+
+        return update
+
+
+    def keyRight(self):
+        length = len(self.lines[self.y + self.scrollY])
+
+        update = False
+        
+        if self.x + self.scrollX < length:
+            if self.x < self.width - 1:
+                self.x += 1
+            else:
+                self.scrollX += 1
+                update = True
+        else:
+            # next line
+
+            value = self.keyDown()
+            if value:
+                update = True
+
+            if value == None:
+                return
+
+            self.x = 0
+            self.scrollX = 0
+
+        self.lastX = self.x + self.scrollX
+
+        return update
+
+
+    def bounds(self):
+        self.x = self.lastX - self.scrollX
+
+        update = False
+
+        length = len(self.lines[self.y + self.scrollY])
+
+        if self.x < 0:
+            self.scrollX -= abs(self.x)
+            self.x = 0
+            update = True
+
+        elif self.x >= self.width:
+            self.scrollX += self.x - self.width 
+            self.x = self.width - 1
+            update = True
+
+        if self.x + self.scrollX > length:
+            #self.x + self.scrollX = length
+            if self.scrollX > length:
+                self.scrollX = length
+                self.x = 0
+                update = True
+            else:
+                self.x = length - self.scrollX
+
+        return update
+
+
+    def updateScreen(self, endLine=True):
+        #self.window.erase()
+        #self.window.refresh()
+
+        #self.log.write(f'updating! {self.scrollY}\n')
+        self.updateDim()
+
+        # self.log.write(f'dimensions = {self.height} x {self.width}\n')
+
+        margin = self.getMargin()
+
+        for y in range(self.height):
+            if self.scrollY + y >= len(self.lines):
+                break
+
+            entireLine = self.lines[self.scrollY + y]
+            visibleLine = entireLine[self.scrollX:self.scrollX + self.width]
+
+            self.colorPrint(visibleLine, y, resetX=margin, fullLine=True)
+
+
+            lineNumber = y + self.scrollY + 1
+            self.window.addstr(y, 0, f'{lineNumber:0{margin - 1}d}|', curses.color_pair(16))
+            # self.log.write(f'adding line {lineNumber:0{margin - 1}d}| at {y}')
+
+
+        if not endLine:
+            return
+
+        #self.print(, self.height - 1, resetX=True, fullLine=True)
+        msg1 = '<< option-q to quit >>'
+        msg2 = '<< option-o to save >>'
+
+        buf = '-' * (self.width - len(msg1) - len(msg2) - 1)
+
+        if buf == '':
+            raise Exception('Make your window bigger (wider)')
+
+        text = msg1 + buf + msg2
+
+        self.window.addstr(self.height, 0, text, curses.color_pair(0)) # 16
+
+
+class TextEditor(TextRenderer):
+    '''
+    option-o to write out
+    option-q to quit
+    '''
+
+    def __init__(self):
+        super(TextEditor, self).__init__()
+
+        self.height -= 1
+
+
+    def updateDim(self):
+        self.height, self.width = self.window.getmaxyx()
+        self.height -= 1
+        self.width -= self.getMargin()
+
+
+    def dump(self):
+        if not self.pathAndFile:
+            self.log.write('pathAndFile not specified yet\n')
+            sys.exit(1)
+
+        # prepare
+
+        text = '\n'.join(self.lines)
+
+        with open(self.pathAndFile, 'w') as f:
+            f.write(text)
+
+        return False
+
+
+    def processKey(self, k):
+        options = {
+            'return': self.keyReturn,
+            'delete': self.keyDelete,
+            'down': self.keyDown,
+            'up': self.keyUp,
+            'left': self.keyLeft,
+            'right': self.keyRight,
+            'opt-o': self.dump,
+            'opt-q': self.close
+        }
+
+        update = False
+
+        if k in options:
+            function = options[k]
+            update = function()
+
+
+        elif type(k) == int and k < 256:
+            update = self.key(k)
+
+        self.lastKeyPress['type'] = k
+        self.lastKeyPress['time'] = time.time()
+
+        if update:
+            self.updateScreen()
+
+
+    def key(self, k):
+        try:
+            char = bytearray([k]).decode()
+        except UnicodeDecodeError:
+            self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
+            return
+
+        preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX)]
+        postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
+
+        if k == 9: # tab
+            char = '    ' # four spaces
+
+        self.lines[self.y + self.scrollY] = preSection + char + postSection            
+
+        if k == 9:
+            for _ in range(3):
+                self.keyRight()
+
+        self.keyRight()
+
+        return True
+
+
+    def keyReturn(self):
+        pre = self.lines[self.y + self.scrollY][:self.x + self.scrollX] # current line
+        post = self.lines[self.y + self.scrollY][self.x + self.scrollX:]
+
+        self.lines[self.y + self.scrollY] = pre
+        self.lines.insert(self.y + self.scrollY + 1, post)
+
+        self.keyRight()
+
+        return True
+
+
+    def keyDelete(self):
+        if self.x + self.scrollX > 0:
+            preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX) - 1]
+            postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
+
+            self.lines[self.y + self.scrollY] = preSection + postSection
+            self.x -= 1
+
+            if self.scrollX > 0:
+                maxWidth = self.scrollX + self.width
+                visibleLines = self.lines[self.scrollY:self.scrollY + self.height]
+
+                self.log.write(str(visibleLines) + '\n')
+
+                if not any([len(line) >= maxWidth for line in visibleLines]):
+                    self.scrollX -= 1
+                    self.x += 1
+
+        elif self.y + self.scrollY > 0:
+            # blank line
+            remains = self.lines.pop(self.y + self.scrollY)
+
+            #length = len(self.lines[self.y + self.scrollY - 1])
+
+            self.keyLeft()
+
+            self.lines[self.y + self.scrollY] += remains
+
+            if self.y + self.scrollY == len(self.lines) - 1:
+                # last line
+                self.window.erase()
+                # erase() to cleanup leftovers
+
+        self.lastX = self.x + self.scrollX
+
+        return True
+
+
+from keyword import kwlist
+
+builtins = [
+    'ArithmeticError', 'AssertionError', 'AttributeError', 'BaseException', 
+    'BlockingIOError', 'BrokenPipeError', 'BufferError', 'BytesWarning', 
+    'ChildProcessError', 'ConnectionAbortedError', 'ConnectionError', 
+    'ConnectionRefusedError', 'ConnectionResetError', 'DeprecationWarning', 
+    'EOFError', 'Ellipsis', 'EnvironmentError', 'Exception', 'False', 
+    'FileExistsError', 'FileNotFoundError', 'FloatingPointError', 
+    'FutureWarning', 'GeneratorExit', 'IOError', 'ImportError', 
+    'ImportWarning', 'IndentationError', 'IndexError', 'InterruptedError', 
+    'IsADirectoryError', 'KeyError', 'KeyboardInterrupt', 'LookupError', 
+    'MemoryError', 'ModuleNotFoundError', 'NameError', 'None', 
+    'NotADirectoryError', 'NotImplemented', 'NotImplementedError', 'OSError', 
+    'OverflowError', 'PendingDeprecationWarning', 'PermissionError', 
+    'ProcessLookupError', 'RecursionError', 'ReferenceError', 'ResourceWarning', 
+    'RuntimeError', 'RuntimeWarning', 'StopAsyncIteration', 'StopIteration', 
+    'SyntaxError', 'SyntaxWarning', 'SystemError', 'SystemExit', 'TabError', 
+    'TimeoutError', 'True', 'TypeError', 'UnboundLocalError', 
+    'UnicodeDecodeError', 'UnicodeEncodeError', 'UnicodeError', 
+    'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning', 'ValueError', 
+    'Warning', 'ZeroDivisionError', '_', '__build_class__', '__debug__', 
+    '__doc__', '__import__', '__loader__', '__name__', '__package__', '__spec__', 
+    'abs', 'all', 'any', 'ascii', 'bin', 'bool', 'bytearray', 'bytes', 'callable',
+    'chr', 'classmethod', 'compile', 'complex', 'copyright', 'credits', 
+    'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 'exec', 'exit', 
+    'filter', 'float', 'format', 'frozenset', 'getattr', 'globals', 'hasattr', 
+    'hash', 'help', 'hex', 'id', 'input', 'int', 'isinstance', 'issubclass', 
+    'iter', 'len', 'license', 'list', 'locals', 'map', 'max', 'memoryview', 'min', 
+    'next', 'object', 'oct', 'open', 'ord', 'pow', 'print', 'property', 'quit', 
+    'range', 'repr', 'reversed', 'round', 'set', 'setattr', 'slice', 'sorted', 
+    'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'
+    ]
+
+def init(builtins):
+    global colors
+
+    colors = [
+        # (start tokens, color, type, end token)
+
+        (['class'], 52, 'between', ':('),
+        (['def'], 52, 'between', '('),
+        (['self'], 209),
+        (kwlist, 209),
+        (builtins, 52),
+        ('=-+*%^&|></~', 161),
+        ('1234567890', 7),
+        ('#', 245, 'till', '\n'),
+        ('\'\"', 11, 'till', '\'\"')
+    ]
+
+colors = None
+
+init(builtins)
+
+
+
+
+f = open('debug.log', 'w')
+# f.write(str(colors))
+f.close()
+
+def getSpecial(c):
+    if len(c) <= 2:
+        return None
+    else:
+        return c[1:4]
+
+def split(line):
+    dividers = ' 1234567890(){}[]=+-*^%|?&<>.,:;@/~#\'\"'
+    
+    ls = []
+    latest = ''
+    currentDividing = False
+
+    for char in line: 
+        if char in dividers:
+            if latest != '':
+                ls.append(latest)
+            currentDividing = True
+            latest = char
+        else:
+            if currentDividing:
+                currentDividing = False
+                ls.append(latest)
+                latest = ''
+
+            latest += char
+
+    ls.append(latest)
+    return ls
+
+def getColors(line):
+    ls = split(line)
+    newLs = []
+
+    special = None
+
+    f = open('debug.log', 'a')
+
+    t = colors[4][0]
+    f.write(f'update = {t}\n')
+
+    for k in ls:
+        if special:
+            type_ = special[1]
+            color = special[0]
+
+            # if type_ != 'between':
+            #     newLs.append((k, special[0]))
+
+            if k in special[2] and type_ in ['till', 'between']:
+                # end of special
+                f.write(f'ending {special}\n')
+                special = None
+
+                if type_ != 'between':
+                    newLs.append((k, color))
+                    continue
+                else:
+                    pass # between at the end (i.e. at the end token)
+            else:
+                # not the end, i.e. middle section
+                newLs.append((k, color))
+                continue
+
+        for c in colors:
+            if k in c[0]:
+                s = getSpecial(c)
+                if s:
+                    assert s[1] in ['till', 'between']
+                    special = s
+                    f.write(f'activating {c}, key = {k}\n')
+
+                if s and s[1] == 'between':
+                    continue
+
+                newLs.append((k, c[1]))
+                break
+        else:
+            newLs.append((k, 16))
+
+    f.close()
+
+    return newLs
+
+
+if __name__ == '__main__':
+    if len(sys.argv) != 2:
+        print('usage: TextEditor file')
+        sys.exit(1)
+
+    # if not os.path.isfile(sys.argv[1]):
+    #     print('error: file not found')
+    #     sys.exit(1)
+
+
+    with TextEditor() as m:
+        m.load(sys.argv[1])
+        m.run()
+
+
