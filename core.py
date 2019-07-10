@@ -32,6 +32,9 @@ class Main():
         if self.log:
             self.log.close()
 
+    def updateDim(self):
+        self.height, self.width = self.window.getmaxyx()
+
     def captureKey(self):
         a = [self.window.getch()]
 

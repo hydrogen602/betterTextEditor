@@ -127,12 +127,19 @@ class TextRenderer(core.Main):
             self.lines[row] = prevText + text
 
 
+    def close(self):
+        # ask for save? in textEditor
+
+        self.isRunning = False
+
+
     def processKey(self, k):
         options = {
             'down': self.keyDown,
             'up': self.keyUp,
             'left': self.keyLeft,
-            'right': self.keyRight
+            'right': self.keyRight,
+            'opt-q': self.close
         }
 
         update = False
@@ -301,6 +308,9 @@ class TextRenderer(core.Main):
         #self.window.refresh()
 
         #self.log.write(f'updating! {self.scrollY}\n')
+        self.updateDim()
+
+        self.log.write(f'dimensions = {self.height} x {self.width}\n')
 
         for i in range(self.height):
             if self.scrollY + i >= len(self.lines):

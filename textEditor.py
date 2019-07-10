@@ -14,7 +14,12 @@ class TextEditor(textRenderer.TextRenderer):
         super(TextEditor, self).__init__()
 
         self.height -= 1
-        
+
+
+    def updateDim(self):
+        self.height, self.width = self.window.getmaxyx()
+        self.height -= 1
+    
 
     def dump(self):
         if not self.pathAndFile:
@@ -29,12 +34,6 @@ class TextEditor(textRenderer.TextRenderer):
             f.write(text)
 
         return False
-
-
-    def close(self):
-        # ask for save?
-
-        self.isRunning = False
 
 
     def processKey(self, k):
