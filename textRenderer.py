@@ -4,8 +4,6 @@ import time
 
 import highlight_python
 
-highlight_python.init(__builtins__)
-
 # Idea: make it auto detect key methods using dir() and then run
 # them using getattr()
 
@@ -105,7 +103,7 @@ class TextRenderer(core.Main):
 
 
 
-    def print(self, text, row, color=16, resetX=False):   
+    def print(self, text, row, color=16, resetX=False, fullLine=False):   
         if resetX: # start at the beginning of the line
             prevText = ''
             col = 0
@@ -119,6 +117,11 @@ class TextRenderer(core.Main):
             visibleText = text
 
         self.window.addstr(row, col, visibleText, core.curses.color_pair(color))
+
+        counter = col + len(visibleText)
+        if fullLine:
+            filler = ' ' * (self.width - counter - 1)
+            self.window.addstr(row, counter, filler, core.curses.color_pair(16))
 
         if not resetX:
             self.lines[row] = prevText + text
@@ -293,7 +296,7 @@ class TextRenderer(core.Main):
         return update
 
 
-    def updateScreen(self):
+    def updateScreen(self, endLine=True):
         #self.window.erase()
         #self.window.refresh()
 
@@ -309,9 +312,26 @@ class TextRenderer(core.Main):
             # self.print(visibleLine, i, resetX=True)
             self.colorPrint(visibleLine, i, resetX=True, fullLine=True)
 
+        if not endLine:
+            return
+
+        #self.print(, self.height - 1, resetX=True, fullLine=True)
+        msg1 = '<< option-q to quit >>'
+        msg2 = '<< option-o to save >>'
+
+        buf = '-' * (self.width - len(msg1) - len(msg2) - 1)
+
+        if buf == '':
+            raise Exception('Make your window bigger (wider)')
+
+        text = msg1 + buf + msg2
+
+        self.window.addstr(self.height, 0, text, core.curses.color_pair(16))
+
 
 
 if __name__ == '__main__':
+    # prob doesnt work right now. use textEditor
     with TextRenderer() as m:
         m.load('main.py')
         m.run()

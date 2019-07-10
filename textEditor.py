@@ -13,6 +13,8 @@ class TextEditor(textRenderer.TextRenderer):
     def __init__(self):
         super(TextEditor, self).__init__()
 
+        self.height -= 1
+        
 
     def dump(self):
         if not self.pathAndFile:
