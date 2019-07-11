@@ -30,6 +30,8 @@ class TextRenderer(core.Main):
 
         self.lengthOfFile = 0
 
+        self.highlighter = highlight_python.Highlighter()
+
 
     def getMargin(self):
         self.lengthOfFile = len(self.lines)
@@ -368,7 +370,7 @@ class TextRenderer(core.Main):
 
         margin = self.getMargin()
 
-        linesColor = highlight_python.getAllColors(self.lines)
+        linesColor = self.highlighter.getAllColors(self.lines)
 
         # for l in self.linesColor:
         #     self.log.write(str(l) + '\n')

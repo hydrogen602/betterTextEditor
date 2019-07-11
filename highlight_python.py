@@ -63,7 +63,7 @@ class Highlighter:
         else:
             self.rules = colors
 
-        self.inMultiLineComment = False
+        self.multiLineComment = None
 
 
     def getSpecial(self, c):
@@ -103,6 +103,7 @@ class Highlighter:
 
         special = None
 
+
         # f = open('debug.log', 'a')
 
         t = colors[4][0]
@@ -110,11 +111,21 @@ class Highlighter:
 
         last3 = []
         for k in ls:
-            endedSpecial = None
 
             last3.append(k)
             if len(last3) > 3:
                 last3.pop(0)
+
+            if self.multiLineComment:
+                # print(f'debug {last3} {special}')
+                if ''.join(last3) == self.multiLineComment:
+                    # print('end')
+                    self.multiLineComment = None
+
+                newLs.append((k, 11))
+                continue
+
+            # print(f'special {special} {k}')
 
             if special:
                 type_ = special[1]
@@ -126,7 +137,6 @@ class Highlighter:
                 if k in special[2] and type_ in ['till', 'between']:
                     # end of special
                     # f.write(f'ending {special}\n')
-                    endedSpecial = special
                     special = None
 
                     if type_ != 'between':
@@ -139,10 +149,13 @@ class Highlighter:
                     newLs.append((k, color))
                     continue
 
-            if last3[1] == ['\'', '\'', '\'']: #11, 'till', '\'\"'
-                print('debug!')
-                print(last2)
-                print(endedSpecial)
+            if ''.join(last3) in ['\'\'\'', '"""']: #11, 'till', '\'\"'
+                # print('debug!')
+                # print(last3)
+                self.multiLineComment = ''.join(last3)
+                special = None
+                newLs.append((k, 11))
+                continue
 
             for c in colors:
                 if k in c[0]:
@@ -165,9 +178,10 @@ class Highlighter:
         return newLs
 
     def getAllColors(self, lines):
+        self.multiLineComment = None
         return [self.getColors(l) for l in lines]
 
 
 if __name__ == '__main__':
     h = Highlighter()
-    print(h.getColors(' t.column\'\'\'s'))
+    print(h.getColors(' t.column\'\'\'s\'\'\' abc'))
