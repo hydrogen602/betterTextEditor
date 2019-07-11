@@ -46,7 +46,11 @@ colors = [
     ('\'\"', 11, 'till', '\'\"')
 ]
 
-
+#
+# start moving everything into
+# the class so that things
+# can be packed a bit better
+#
 
 
 # f = open('debug.log', 'w')
@@ -56,14 +60,18 @@ colors = [
 
 class Highlighter:
 
-    def __init__(self, rules=None):
 
+    def __init__(self, rules=None):
         if rules:
             self.rules = rules
         else:
             self.rules = colors
 
         self.multiLineComment = None
+
+        self.backslash = False
+
+        self.backslashColor = 6
 
 
     def getSpecial(self, c):
@@ -74,7 +82,7 @@ class Highlighter:
 
 
     def split(self, line):
-        dividers = ' 1234567890(){}[]=+-*^%|?&<>.,:;@/~#\'\"'
+        dividers = ' 1234567890(){}[]=+-*^%|?&<>.,:;@/~#\'\"\\'
         
         ls = []
         latest = ''
@@ -134,6 +142,18 @@ class Highlighter:
                 # if type_ != 'between':
                 #     newLs.append((k, special[0]))
 
+                # char right after a backslash
+                if self.backslash:
+                    newLs.append((k, self.backslashColor))
+                    self.backslash = False
+                    continue
+
+                # check for backslash in a string
+                if k == '\\' and special == (11, 'till', '\'\"'):
+                    newLs.append((k, self.backslashColor))
+                    self.backslash = True
+                    continue
+
                 if k in special[2] and type_ in ['till', 'between']:
                     # end of special
                     # f.write(f'ending {special}\n')
@@ -184,4 +204,4 @@ class Highlighter:
 
 if __name__ == '__main__':
     h = Highlighter()
-    print(h.getColors(' t.column\'\'\'s\'\'\' abc'))
+    print(h.getColors(' t.column\'s\\a\' abc'))

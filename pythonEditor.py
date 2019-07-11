@@ -39,9 +39,9 @@ class editor:
         text = text.split('\n')
         global log
         #log.write(f'{self.m.height}')
-        for i in range(self.m.height - 2):
-            log.write(text[i] + '\n')
-            self.print(text[i], i)
+        # for i in range(self.m.height - 2):
+        #     log.write(text[i] + '\n')
+        #     self.print(text[i], i)
 
 log = None
 
