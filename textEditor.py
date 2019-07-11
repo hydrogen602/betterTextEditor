@@ -15,6 +15,8 @@ class TextEditor(textRenderer.TextRenderer):
 
         self.height -= 1
 
+        self.unsavedContent = False
+
 
     def updateDim(self):
         self.height, self.width = self.window.getmaxyx()
@@ -67,6 +69,8 @@ class TextEditor(textRenderer.TextRenderer):
 
 
     def key(self, k):
+        self.unsavedContent = True
+
         try:
             char = bytearray([k]).decode()
         except UnicodeDecodeError:
@@ -91,6 +95,8 @@ class TextEditor(textRenderer.TextRenderer):
 
 
     def keyReturn(self):
+        self.unsavedContent = True
+
         pre = self.lines[self.y + self.scrollY][:self.x + self.scrollX] # current line
         post = self.lines[self.y + self.scrollY][self.x + self.scrollX:]
 
@@ -103,6 +109,8 @@ class TextEditor(textRenderer.TextRenderer):
 
 
     def keyDelete(self):
+        self.unsavedContent = True
+
         if self.x + self.scrollX > 0:
             preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX) - 1]
             postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
@@ -133,6 +141,7 @@ class TextEditor(textRenderer.TextRenderer):
             if self.y + self.scrollY == len(self.lines) - 1:
                 # last line
                 self.window.erase()
+                
                 # erase() to cleanup leftovers
 
         self.lastX = self.x + self.scrollX

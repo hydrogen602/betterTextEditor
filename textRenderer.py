@@ -32,6 +32,11 @@ class TextRenderer(core.Main):
 
         self.highlighter = Highlighter()
 
+        self.unsavedContent = False # always false for this class
+        # altered by edit-enabled subclasses
+
+        self.prompt = None
+
 
     def getMargin(self):
         self.lengthOfFile = len(self.lines)
@@ -83,7 +88,7 @@ class TextRenderer(core.Main):
         breakNow = False
 
         for p in data:
-            self.log.write(f'p = {p}\n')
+            #self.log.write(f'p = {p}\n')
 
             txt = p[0]
             color = p[1]
@@ -183,9 +188,59 @@ class TextRenderer(core.Main):
             self.lines[row] = prevText + text
 
 
+    def createPrompt(self, prompt, longAnswer=False):
+        row = (self.height - len(prompt)) // 2
+        col = (self.width - len(prompt[0])) // 2
+
+        for i in range(len(prompt)):
+            self.window.addstr(row + i, col, prompt[i], curses.color_pair(0))
+
+        self.window.move(0, self.marginLeft)
+
+        ls = []
+        while True:
+            k = self.captureKey()
+
+            if longAnswer and k == 'return':
+                break
+
+            try:
+                answer = bytearray([k]).decode()
+            except UnicodeDecodeError:
+                self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
+            else:
+                if longAnswer:
+                    ls.append(answer)
+                else:
+                    break # success, got an answer
+
+        return answer
+
     def close(self):
         # ask for save? in textEditor
 
+        # for edit-enabled subclasses
+        if self.unsavedContent:
+            # ask for save
+            prompt = [
+                '+-------------------------------+',
+                '|                               |',
+                '|  Close without saving? (Y|N)  |',
+                '|                               |',
+                '+-------------------------------+'
+                ]
+
+            answer = self.createPrompt(prompt)
+
+            if answer in ['Y', 'y']:
+                pass # proceed closing
+
+            elif answer in ['N', 'n']:
+                # self.log.write('closing stopped \n')
+                self.updateScreen()
+                return
+
+        # self.log.write(f'closing {answer} \n')
         self.isRunning = False
 
 

@@ -75,7 +75,7 @@ class Main():
         if a == [27, 91, 65]:
             return 'up'
 
-        return a # unknown
+        return None # unknown key
 
     def processKey(self, k):
 
