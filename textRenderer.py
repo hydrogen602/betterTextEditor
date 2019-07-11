@@ -4,7 +4,7 @@ from core import curses
 
 import time
 
-import highlight_python
+from highlight_python import Highlighter
 
 # Idea: make it auto detect key methods using dir() and then run
 # them using getattr()
@@ -30,7 +30,7 @@ class TextRenderer(core.Main):
 
         self.lengthOfFile = 0
 
-        self.highlighter = highlight_python.Highlighter()
+        self.highlighter = Highlighter()
 
 
     def getMargin(self):

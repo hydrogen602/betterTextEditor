@@ -1,50 +1,5 @@
 from keyword import kwlist
 
-builtins = [
-    'ArithmeticError', 'AssertionError', 'AttributeError', 'BaseException', 
-    'BlockingIOError', 'BrokenPipeError', 'BufferError', 'BytesWarning', 
-    'ChildProcessError', 'ConnectionAbortedError', 'ConnectionError', 
-    'ConnectionRefusedError', 'ConnectionResetError', 'DeprecationWarning', 
-    'EOFError', 'Ellipsis', 'EnvironmentError', 'Exception', 'False', 
-    'FileExistsError', 'FileNotFoundError', 'FloatingPointError', 
-    'FutureWarning', 'GeneratorExit', 'IOError', 'ImportError', 
-    'ImportWarning', 'IndentationError', 'IndexError', 'InterruptedError', 
-    'IsADirectoryError', 'KeyError', 'KeyboardInterrupt', 'LookupError', 
-    'MemoryError', 'ModuleNotFoundError', 'NameError', 'None', 
-    'NotADirectoryError', 'NotImplemented', 'NotImplementedError', 'OSError', 
-    'OverflowError', 'PendingDeprecationWarning', 'PermissionError', 
-    'ProcessLookupError', 'RecursionError', 'ReferenceError', 'ResourceWarning', 
-    'RuntimeError', 'RuntimeWarning', 'StopAsyncIteration', 'StopIteration', 
-    'SyntaxError', 'SyntaxWarning', 'SystemError', 'SystemExit', 'TabError', 
-    'TimeoutError', 'True', 'TypeError', 'UnboundLocalError', 
-    'UnicodeDecodeError', 'UnicodeEncodeError', 'UnicodeError', 
-    'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning', 'ValueError', 
-    'Warning', 'ZeroDivisionError', '_', '__build_class__', '__debug__', 
-    '__doc__', '__import__', '__loader__', '__name__', '__package__', '__spec__', 
-    'abs', 'all', 'any', 'ascii', 'bin', 'bool', 'bytearray', 'bytes', 'callable',
-    'chr', 'classmethod', 'compile', 'complex', 'copyright', 'credits', 
-    'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 'exec', 'exit', 
-    'filter', 'float', 'format', 'frozenset', 'getattr', 'globals', 'hasattr', 
-    'hash', 'help', 'hex', 'id', 'input', 'int', 'isinstance', 'issubclass', 
-    'iter', 'len', 'license', 'list', 'locals', 'map', 'max', 'memoryview', 'min', 
-    'next', 'object', 'oct', 'open', 'ord', 'pow', 'print', 'property', 'quit', 
-    'range', 'repr', 'reversed', 'round', 'set', 'setattr', 'slice', 'sorted', 
-    'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'
-    ]
-
-colors = [
-    # (start tokens, color, type, end token)
-
-    (['class'], 52, 'between', ':('),
-    (['def'], 52, 'between', '('),
-    (['self'], 209),
-    (kwlist, 209),
-    (builtins, 52),
-    ('=-+*%^&|></~', 161),
-    ('1234567890', 7),
-    ('#', 245, 'till', '\n'),
-    ('\'\"', 11, 'till', '\'\"')
-]
 
 #
 # start moving everything into
@@ -60,12 +15,61 @@ colors = [
 
 class Highlighter:
 
+    builtins = [
+        'ArithmeticError', 'AssertionError', 'AttributeError', 
+        'BaseException', 'BlockingIOError', 'BrokenPipeError', 
+        'BufferError', 'BytesWarning', 'ChildProcessError', 
+        'ConnectionAbortedError', 'ConnectionError', 'ConnectionRefusedError',
+        'ConnectionResetError', 'DeprecationWarning', 'EOFError', 'Ellipsis', 
+        'EnvironmentError', 'Exception', 'False', 'FileExistsError', 
+        'FileNotFoundError', 'FloatingPointError', 'FutureWarning', 
+        'GeneratorExit', 'IOError', 'ImportError', 'ImportWarning', 
+        'IndentationError', 'IndexError', 'InterruptedError', 
+        'IsADirectoryError', 'KeyError', 'KeyboardInterrupt', 'LookupError', 
+        'MemoryError', 'ModuleNotFoundError', 'NameError', 'None', 
+        'NotADirectoryError', 'NotImplemented', 'NotImplementedError', 
+        'OSError', 'OverflowError', 'PendingDeprecationWarning', 
+        'PermissionError', 'ProcessLookupError', 'RecursionError', 
+        'ReferenceError', 'ResourceWarning', 'RuntimeError', 'RuntimeWarning',
+        'StopAsyncIteration', 'StopIteration', 'SyntaxError', 'SyntaxWarning',
+        'SystemError', 'SystemExit', 'TabError', 'TimeoutError', 'True', 
+        'TypeError', 'UnboundLocalError', 'UnicodeDecodeError', 
+        'UnicodeEncodeError', 'UnicodeError', 'UnicodeTranslateError', 
+        'UnicodeWarning', 'UserWarning', 'ValueError', 'Warning', 
+        'ZeroDivisionError', '_', '__build_class__', '__debug__', '__doc__', 
+        '__import__', '__loader__', '__name__', '__package__', '__spec__', 
+        'abs', 'all', 'any', 'ascii', 'bin', 'bool', 'bytearray', 'bytes', 
+        'callable', 'chr', 'classmethod', 'compile', 'complex', 'copyright',
+        'credits', 'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 
+        'exec', 'exit', 'filter', 'float', 'format', 'frozenset', 'getattr', 
+        'globals', 'hasattr', 'hash', 'help', 'hex', 'id', 'input', 'int', 
+        'isinstance', 'issubclass', 'iter', 'len', 'license', 'list', 
+        'locals', 'map', 'max', 'memoryview', 'min', 'next', 'object', 'oct',
+        'open', 'ord', 'pow', 'print', 'property', 'quit', 'range', 'repr', 
+        'reversed', 'round', 'set', 'setattr', 'slice', 'sorted', 
+        'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'
+        ]
+
+    colors = [
+        # (start tokens, color, type, end token)
+
+        (['class'], 52, 'between', ':('),
+        (['def'], 52, 'between', '('),
+        (['self'], 209),
+        (kwlist, 209),
+        (builtins, 52),
+        ('=-+*%^&|></~', 161),
+        ('1234567890', 7),
+        ('#', 245, 'till', '\n'),
+        ('\'\"', 11, 'till', '\'\"')
+    ]
+
 
     def __init__(self, rules=None):
         if rules:
             self.rules = rules
         else:
-            self.rules = colors
+            self.rules = Highlighter.colors
 
         self.multiLineComment = None
 
@@ -114,7 +118,7 @@ class Highlighter:
 
         # f = open('debug.log', 'a')
 
-        t = colors[4][0]
+        # t = self.rules[4][0]
         # f.write(f'update = {t}\n')
 
         last3 = []
@@ -177,7 +181,7 @@ class Highlighter:
                 newLs.append((k, 11))
                 continue
 
-            for c in colors:
+            for c in self.rules:
                 if k in c[0]:
                     s = self.getSpecial(c)
                     if s:
