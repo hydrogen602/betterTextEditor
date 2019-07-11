@@ -68,10 +68,56 @@ class TextRenderer(core.Main):
         self.updateScreen()
 
 
+    def preColorPrint(self, data, row, fullLine=True):
+        # called for every row
+        # data is entire row
+
+        counter = 0
+
+        inVisibleRegion = False
+
+        offScreenLeft = 0
+
+        breakNow = False
+
+        for p in data:
+            self.log.write(f'p = {p}\n')
+
+            txt = p[0]
+            color = p[1]
+
+            if len(txt) + offScreenLeft >= self.scrollX and not inVisibleRegion:
+                inVisibleRegion = True
+                
+                txt = txt[self.scrollX - offScreenLeft:]
+
+            if not inVisibleRegion:
+                offScreenLeft += len(txt)
+                continue
+
+            # in visible region
+
+            if len(txt) + counter >= self.width:
+                txt = txt[:self.width - counter - 1]
+                breakNow = True
+
+            self.window.addstr(row, self.marginLeft + counter, txt, curses.color_pair(color))
+
+            counter += len(txt)
+
+            if breakNow:
+                break
+
+        if fullLine:
+            filler = ' ' * (self.width - counter - 1)
+            self.window.addstr(row, self.marginLeft + counter, filler, curses.color_pair(16))
+
+
+
     def colorPrint(self, text, row, resetX=False, fullLine=False):
         if resetX: # start at the beginning of the line
             prevText = ''
-            counter = resetX
+            counter = 0
         else:
             prevText = self.lines[row]
             counter = len(prevText)
@@ -81,13 +127,6 @@ class TextRenderer(core.Main):
             self.lines.append('')
 
         textColorPairs = highlight_python.getColors(text)
-
-        #self.log.write(str(textColorPairs) + '\n\n')
-
-        # if col + len(text) >= self.width:
-        #     visibleText = text[:self.width - col - 1]
-        # else:
-        #     visibleText = text
 
         breakNow = False
 
@@ -100,7 +139,7 @@ class TextRenderer(core.Main):
                 txt = txt[:self.width - counter - 1]
                 breakNow = True
 
-            self.window.addstr(row, counter, txt, curses.color_pair(color))
+            self.window.addstr(row, self.marginLeft + counter, txt, curses.color_pair(color))
 
             counter += len(txt)
 
@@ -109,14 +148,16 @@ class TextRenderer(core.Main):
 
         if fullLine:
             filler = ' ' * (self.width - counter - 1)
-            self.window.addstr(row, counter, filler, curses.color_pair(16))
+            self.window.addstr(row, self.marginLeft + counter, filler, curses.color_pair(16))
 
         if not resetX:
             self.lines[row] = prevText + text
 
 
 
-    def print(self, text, row, color=16, resetX=False, fullLine=False):   
+    def print(self, text, row, color=16, resetX=False, fullLine=False):
+        raise DeprecationWarning('not updated anymore')
+
         if resetX: # start at the beginning of the line
             prevText = ''
             col = resetX
@@ -327,14 +368,26 @@ class TextRenderer(core.Main):
 
         margin = self.getMargin()
 
+        linesColor = highlight_python.getAllColors(self.lines)
+
+        # for l in self.linesColor:
+        #     self.log.write(str(l) + '\n')
+
+
         for y in range(self.height):
             if self.scrollY + y >= len(self.lines):
                 break
 
-            entireLine = self.lines[self.scrollY + y]
-            visibleLine = entireLine[self.scrollX:self.scrollX + self.width]
+            # entireLine = self.lines[self.scrollY + y]
 
-            self.colorPrint(visibleLine, y, resetX=margin, fullLine=True)
+            entireLineData = linesColor[self.scrollY + y]
+
+            self.preColorPrint(entireLineData, y, fullLine=True)
+
+            # visibleLine = entireLine[self.scrollX:self.scrollX + self.width]
+
+            # self.colorPrint(visibleLine, y, resetX=margin, fullLine=True)
+
 
 
             lineNumber = y + self.scrollY + 1
@@ -349,7 +402,7 @@ class TextRenderer(core.Main):
         msg1 = '<< option-q to quit >>'
         msg2 = '<< option-o to save >>'
 
-        buf = '-' * (self.width - len(msg1) - len(msg2) - 1)
+        buf = '-' * ((self.width + self.marginLeft) - len(msg1) - len(msg2) - 1)
 
         if buf == '':
             raise Exception('Make your window bigger (wider)')

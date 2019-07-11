@@ -145,5 +145,9 @@ def getColors(line):
 
     return newLs
 
+def getAllColors(lines):
+    return [getColors(l) for l in lines]
+
+
 if __name__ == '__main__':
     print(getColors('# t.columns'))
