@@ -22,7 +22,10 @@ class Main():
 
         self.isRunning = False
 
-        self.log = open('core.py.log', 'w')
+        self.inDevelopment = True
+
+        if self.inDevelopment:
+            self.log = open('core.py.log', 'w')
 
         self.marginLeft = 0
 

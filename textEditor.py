@@ -1,10 +1,10 @@
 
-import textRenderer
+from textRenderer import TextRenderer
 import time
 import sys
 
 
-class TextEditor(textRenderer.TextRenderer):
+class TextEditor(TextRenderer):
     '''
     option-o to write out
     option-q to quit
@@ -35,6 +35,8 @@ class TextEditor(textRenderer.TextRenderer):
 
         with open(self.pathAndFile, 'w') as f:
             f.write(text)
+
+        self.unsavedContent = False
 
         return False
 

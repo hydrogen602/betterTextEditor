@@ -1,7 +1,5 @@
 
-import core
-from core import curses
-
+from core import Main, curses
 import time
 
 from highlight_python import Highlighter
@@ -10,7 +8,7 @@ from highlight_python import Highlighter
 # them using getattr()
 
 
-class TextRenderer(core.Main):
+class TextRenderer(Main):
 
 
     def __init__(self):
@@ -121,71 +119,71 @@ class TextRenderer(core.Main):
 
 
 
-    def colorPrint(self, text, row, resetX=False, fullLine=False):
-        if resetX: # start at the beginning of the line
-            prevText = ''
-            counter = 0
-        else:
-            prevText = self.lines[row]
-            counter = len(prevText)
+    # def colorPrint(self, text, row, resetX=False, fullLine=False):
+    #     if resetX: # start at the beginning of the line
+    #         prevText = ''
+    #         counter = 0
+    #     else:
+    #         prevText = self.lines[row]
+    #         counter = len(prevText)
 
-        if row == len(self.lines):
-            # new line
-            self.lines.append('')
+    #     if row == len(self.lines):
+    #         # new line
+    #         self.lines.append('')
 
-        textColorPairs = highlight_python.getColors(text)
+    #     textColorPairs = highlight_python.getColors(text)
 
-        breakNow = False
+    #     breakNow = False
 
-        for p in textColorPairs:
-            txt = p[0]
-            color = p[1]
+    #     for p in textColorPairs:
+    #         txt = p[0]
+    #         color = p[1]
 
-            if counter + len(txt) >= self.width:
-                # counter + len(txt) = self.width + 1
-                txt = txt[:self.width - counter - 1]
-                breakNow = True
+    #         if counter + len(txt) >= self.width:
+    #             # counter + len(txt) = self.width + 1
+    #             txt = txt[:self.width - counter - 1]
+    #             breakNow = True
 
-            self.window.addstr(row, self.marginLeft + counter, txt, curses.color_pair(color))
+    #         self.window.addstr(row, self.marginLeft + counter, txt, curses.color_pair(color))
 
-            counter += len(txt)
+    #         counter += len(txt)
 
-            if breakNow:
-                break
+    #         if breakNow:
+    #             break
 
-        if fullLine:
-            filler = ' ' * (self.width - counter - 1)
-            self.window.addstr(row, self.marginLeft + counter, filler, curses.color_pair(16))
+    #     if fullLine:
+    #         filler = ' ' * (self.width - counter - 1)
+    #         self.window.addstr(row, self.marginLeft + counter, filler, curses.color_pair(16))
 
-        if not resetX:
-            self.lines[row] = prevText + text
+    #     if not resetX:
+    #         self.lines[row] = prevText + text
 
 
 
-    def print(self, text, row, color=16, resetX=False, fullLine=False):
-        raise DeprecationWarning('not updated anymore')
+    # def print(self, text, row, color=16, resetX=False, fullLine=False):
+    #     raise DeprecationWarning('not updated anymore')
 
-        if resetX: # start at the beginning of the line
-            prevText = ''
-            col = resetX
-        else:
-            prevText = self.lines[row]
-            col = len(prevText)
+    #     if resetX: # start at the beginning of the line
+    #         prevText = ''
+    #         col = resetX
+    #     else:
+    #         prevText = self.lines[row]
+    #         col = len(prevText)
 
-        if col + len(text) >= self.width:
-            visibleText = text[:self.width - col - 1]
-        else:
-            visibleText = text
+    #     if col + len(text) >= self.width:
+    #         visibleText = text[:self.width - col - 1]
+    #     else:
+    #         visibleText = text
 
-        self.window.addstr(row, col, visibleText, curses.color_pair(color))
+    #     self.window.addstr(row, col, visibleText, curses.color_pair(color))
 
-        counter = col + len(visibleText)
-        if fullLine:
-            filler = ' ' * (self.width - counter - 1)
-            self.window.addstr(row, counter, filler, curses.color_pair(16))
+    #     counter = col + len(visibleText)
+    #     if fullLine:
+    #         filler = ' ' * (self.width - counter - 1)
+    #         self.window.addstr(row, counter, filler, curses.color_pair(16))
 
-        if not resetX:
-            self.lines[row] = prevText + text
+    #     if not resetX:
+    #         self.lines[row] = prevText + text
 
 
     def createPrompt(self, prompt, longAnswer=False):

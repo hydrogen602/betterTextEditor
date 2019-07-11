@@ -11,6 +11,205 @@ import curses
 import time
 import sys
 
+
+from keyword import kwlist
+
+
+class Highlighter:
+
+    builtins = [
+        'ArithmeticError', 'AssertionError', 'AttributeError', 
+        'BaseException', 'BlockingIOError', 'BrokenPipeError', 
+        'BufferError', 'BytesWarning', 'ChildProcessError', 
+        'ConnectionAbortedError', 'ConnectionError', 'ConnectionRefusedError',
+        'ConnectionResetError', 'DeprecationWarning', 'EOFError', 'Ellipsis', 
+        'EnvironmentError', 'Exception', 'False', 'FileExistsError', 
+        'FileNotFoundError', 'FloatingPointError', 'FutureWarning', 
+        'GeneratorExit', 'IOError', 'ImportError', 'ImportWarning', 
+        'IndentationError', 'IndexError', 'InterruptedError', 
+        'IsADirectoryError', 'KeyError', 'KeyboardInterrupt', 'LookupError', 
+        'MemoryError', 'ModuleNotFoundError', 'NameError', 'None', 
+        'NotADirectoryError', 'NotImplemented', 'NotImplementedError', 
+        'OSError', 'OverflowError', 'PendingDeprecationWarning', 
+        'PermissionError', 'ProcessLookupError', 'RecursionError', 
+        'ReferenceError', 'ResourceWarning', 'RuntimeError', 'RuntimeWarning',
+        'StopAsyncIteration', 'StopIteration', 'SyntaxError', 'SyntaxWarning',
+        'SystemError', 'SystemExit', 'TabError', 'TimeoutError', 'True', 
+        'TypeError', 'UnboundLocalError', 'UnicodeDecodeError', 
+        'UnicodeEncodeError', 'UnicodeError', 'UnicodeTranslateError', 
+        'UnicodeWarning', 'UserWarning', 'ValueError', 'Warning', 
+        'ZeroDivisionError', '_', '__build_class__', '__debug__', '__doc__', 
+        '__import__', '__loader__', '__name__', '__package__', '__spec__', 
+        'abs', 'all', 'any', 'ascii', 'bin', 'bool', 'bytearray', 'bytes', 
+        'callable', 'chr', 'classmethod', 'compile', 'complex', 'copyright',
+        'credits', 'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 
+        'exec', 'exit', 'filter', 'float', 'format', 'frozenset', 'getattr', 
+        'globals', 'hasattr', 'hash', 'help', 'hex', 'id', 'input', 'int', 
+        'isinstance', 'issubclass', 'iter', 'len', 'license', 'list', 
+        'locals', 'map', 'max', 'memoryview', 'min', 'next', 'object', 'oct',
+        'open', 'ord', 'pow', 'print', 'property', 'quit', 'range', 'repr', 
+        'reversed', 'round', 'set', 'setattr', 'slice', 'sorted', 
+        'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'
+        ]
+
+    colors = [
+        # (start tokens, color, type, end token)
+
+        (['class'], 52, 'between', ':('),
+        (['def'], 52, 'between', '('),
+        (['self'], 209),
+        (kwlist, 209),
+        (builtins, 52),
+        ('=-+*%^&|></~', 161),
+        ('1234567890', 7),
+        ('#', 245, 'till', '\n'),
+        ('\'\"', 11, 'till', '\'\"')
+    ]
+
+
+    def __init__(self, rules=None):
+        if rules:
+            self.rules = rules
+        else:
+            self.rules = Highlighter.colors
+
+        self.multiLineComment = None
+
+        self.backslash = False
+
+        self.backslashColor = 6
+
+
+    def getSpecial(self, c):
+        if len(c) <= 2:
+            return None
+        else:
+            return c[1:4]
+
+
+    def split(self, line):
+        dividers = ' 1234567890(){}[]=+-*^%|?&<>.,:;@/~#\'\"\\'
+        
+        ls = []
+        latest = ''
+        currentDividing = False
+
+        for char in line: 
+            if char in dividers:
+                if latest != '':
+                    ls.append(latest)
+                currentDividing = True
+                latest = char
+            else:
+                if currentDividing:
+                    currentDividing = False
+                    ls.append(latest)
+                    latest = ''
+
+                latest += char
+
+        ls.append(latest)
+        return ls
+
+    def getColors(self, line):
+        ls = self.split(line)
+        newLs = []
+
+        special = None
+
+
+        # f = open('debug.log', 'a')
+
+        # t = self.rules[4][0]
+        # f.write(f'update = {t}\n')
+
+        last3 = []
+        for k in ls:
+
+            last3.append(k)
+            if len(last3) > 3:
+                last3.pop(0)
+
+
+
+            if self.multiLineComment:
+
+                if ''.join(last3) == self.multiLineComment:
+                    # print('end')
+                    self.multiLineComment = None
+
+                newLs.append((k, 11))
+                continue
+
+            # print(f'special {special} {k}')
+
+            if special:
+                type_ = special[1]
+                color = special[0]
+
+                # if type_ != 'between':
+                #     newLs.append((k, special[0]))
+
+                # char right after a backslash
+                if self.backslash:
+                    newLs.append((k, self.backslashColor))
+                    self.backslash = False
+                    continue
+
+                # check for backslash in a string
+                if k == '\\' and special == (11, 'till', '\'\"'):
+                    newLs.append((k, self.backslashColor))
+                    self.backslash = True
+                    continue
+
+                if k in special[2] and type_ in ['till', 'between']:
+                    # end of special
+                    # f.write(f'ending {special}\n')
+                    special = None
+
+                    if type_ != 'between':
+                        newLs.append((k, color))
+                        continue
+                    else:
+                        pass # between at the end (i.e. at the end token)
+                else:
+                    # not the end, i.e. middle section
+                    newLs.append((k, color))
+                    continue
+
+            if ''.join(last3) in ['\'\'\'', '"""']: #11, 'till', '\'\"'
+                # print('debug!')
+                # print(last3)
+                self.multiLineComment = ''.join(last3)
+                special = None
+                newLs.append((k, 11))
+                continue
+
+            for c in self.rules:
+                if k in c[0]:
+                    s = self.getSpecial(c)
+                    if s:
+                        assert s[1] in ['till', 'between']
+                        special = s
+                        # f.write(f'activating {c}, key = {k}\n')
+
+                    if s and s[1] == 'between':
+                        continue
+
+                    newLs.append((k, c[1]))
+                    break
+            else:
+                newLs.append((k, 16))
+
+        # f.close()
+
+        return newLs
+
+    def getAllColors(self, lines):
+        self.multiLineComment = None
+        return [self.getColors(l) for l in lines]
+
+
 class Main():
 
     def __init__(self):
@@ -32,7 +231,10 @@ class Main():
 
         self.isRunning = False
 
-        self.log = open('core.py.log', 'w')
+        self.inDevelopment = False
+
+        if self.inDevelopment:
+            self.log = open('core.py.log', 'w')
 
         self.marginLeft = 0
 
@@ -85,7 +287,7 @@ class Main():
         if a == [27, 91, 65]:
             return 'up'
 
-        return a # unknown
+        return None # unknown key
 
     def processKey(self, k):
 
@@ -139,7 +341,9 @@ class TextRenderer(Main):
 
     def __init__(self):
         super(TextRenderer, self).__init__()
-        self.log.write('hi\n')
+
+        if self.inDevelopment:
+            self.log.write('hi\n')
 
         self.lines = ['']
 
@@ -153,6 +357,13 @@ class TextRenderer(Main):
         self.pathAndFile = None
 
         self.lengthOfFile = 0
+
+        self.highlighter = Highlighter()
+
+        self.unsavedContent = False # always false for this class
+        # altered by edit-enabled subclasses
+
+        self.prompt = None
 
 
     def getMargin(self):
@@ -182,8 +393,9 @@ class TextRenderer(Main):
 
         text = text.split('\n')
 
-        self.log.write(f'loaded: {pathAndFile}\n')
-        self.log.write(f'length: {len(text)}\n')
+        if self.inDevelopment:
+            self.log.write(f'loaded: {pathAndFile}\n')
+            self.log.write(f'length: {len(text)}\n')
 
         self.lines = []
         for line in text:
@@ -192,39 +404,40 @@ class TextRenderer(Main):
         self.updateScreen()
 
 
-    def colorPrint(self, text, row, resetX=False, fullLine=False):
-        if resetX: # start at the beginning of the line
-            prevText = ''
-            counter = resetX
-        else:
-            prevText = self.lines[row]
-            counter = len(prevText)
+    def preColorPrint(self, data, row, fullLine=True):
+        # called for every row
+        # data is entire row
 
-        if row == len(self.lines):
-            # new line
-            self.lines.append('')
+        counter = 0
 
-        textColorPairs = getColors(text) # highlight_python
+        inVisibleRegion = False
 
-        #self.log.write(str(textColorPairs) + '\n\n')
-
-        # if col + len(text) >= self.width:
-        #     visibleText = text[:self.width - col - 1]
-        # else:
-        #     visibleText = text
+        offScreenLeft = 0
 
         breakNow = False
 
-        for p in textColorPairs:
+        for p in data:
+            #self.log.write(f'p = {p}\n')
+
             txt = p[0]
             color = p[1]
 
-            if counter + len(txt) >= self.width:
-                # counter + len(txt) = self.width + 1
+            if len(txt) + offScreenLeft >= self.scrollX and not inVisibleRegion:
+                inVisibleRegion = True
+                
+                txt = txt[self.scrollX - offScreenLeft:]
+
+            if not inVisibleRegion:
+                offScreenLeft += len(txt)
+                continue
+
+            # in visible region
+
+            if len(txt) + counter >= self.width:
                 txt = txt[:self.width - counter - 1]
                 breakNow = True
 
-            self.window.addstr(row, counter, txt, curses.color_pair(color))
+            self.window.addstr(row, self.marginLeft + counter, txt, curses.color_pair(color))
 
             counter += len(txt)
 
@@ -233,40 +446,131 @@ class TextRenderer(Main):
 
         if fullLine:
             filler = ' ' * (self.width - counter - 1)
-            self.window.addstr(row, counter, filler, curses.color_pair(16))
-
-        if not resetX:
-            self.lines[row] = prevText + text
+            self.window.addstr(row, self.marginLeft + counter, filler, curses.color_pair(16))
 
 
 
-    def print(self, text, row, color=16, resetX=False, fullLine=False):   
-        if resetX: # start at the beginning of the line
-            prevText = ''
-            col = resetX
-        else:
-            prevText = self.lines[row]
-            col = len(prevText)
+    # def colorPrint(self, text, row, resetX=False, fullLine=False):
+    #     if resetX: # start at the beginning of the line
+    #         prevText = ''
+    #         counter = 0
+    #     else:
+    #         prevText = self.lines[row]
+    #         counter = len(prevText)
 
-        if col + len(text) >= self.width:
-            visibleText = text[:self.width - col - 1]
-        else:
-            visibleText = text
+    #     if row == len(self.lines):
+    #         # new line
+    #         self.lines.append('')
 
-        self.window.addstr(row, col, visibleText, curses.color_pair(color))
+    #     textColorPairs = highlight_python.getColors(text)
 
-        counter = col + len(visibleText)
-        if fullLine:
-            filler = ' ' * (self.width - counter - 1)
-            self.window.addstr(row, counter, filler, curses.color_pair(16))
+    #     breakNow = False
 
-        if not resetX:
-            self.lines[row] = prevText + text
+    #     for p in textColorPairs:
+    #         txt = p[0]
+    #         color = p[1]
 
+    #         if counter + len(txt) >= self.width:
+    #             # counter + len(txt) = self.width + 1
+    #             txt = txt[:self.width - counter - 1]
+    #             breakNow = True
+
+    #         self.window.addstr(row, self.marginLeft + counter, txt, curses.color_pair(color))
+
+    #         counter += len(txt)
+
+    #         if breakNow:
+    #             break
+
+    #     if fullLine:
+    #         filler = ' ' * (self.width - counter - 1)
+    #         self.window.addstr(row, self.marginLeft + counter, filler, curses.color_pair(16))
+
+    #     if not resetX:
+    #         self.lines[row] = prevText + text
+
+
+
+    # def print(self, text, row, color=16, resetX=False, fullLine=False):
+    #     raise DeprecationWarning('not updated anymore')
+
+    #     if resetX: # start at the beginning of the line
+    #         prevText = ''
+    #         col = resetX
+    #     else:
+    #         prevText = self.lines[row]
+    #         col = len(prevText)
+
+    #     if col + len(text) >= self.width:
+    #         visibleText = text[:self.width - col - 1]
+    #     else:
+    #         visibleText = text
+
+    #     self.window.addstr(row, col, visibleText, curses.color_pair(color))
+
+    #     counter = col + len(visibleText)
+    #     if fullLine:
+    #         filler = ' ' * (self.width - counter - 1)
+    #         self.window.addstr(row, counter, filler, curses.color_pair(16))
+
+    #     if not resetX:
+    #         self.lines[row] = prevText + text
+
+
+    def createPrompt(self, prompt, longAnswer=False):
+        row = (self.height - len(prompt)) // 2
+        col = (self.width - len(prompt[0])) // 2
+
+        for i in range(len(prompt)):
+            self.window.addstr(row + i, col, prompt[i], curses.color_pair(0))
+
+        self.window.move(0, self.marginLeft)
+
+        ls = []
+        while True:
+            k = self.captureKey()
+
+            if longAnswer and k == 'return':
+                break
+
+            try:
+                answer = bytearray([k]).decode()
+            except UnicodeDecodeError:
+                if self.inDevelopment:
+                    self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
+            else:
+                if longAnswer:
+                    ls.append(answer)
+                else:
+                    break # success, got an answer
+
+        return answer
 
     def close(self):
         # ask for save? in textEditor
 
+        # for edit-enabled subclasses
+        if self.unsavedContent:
+            # ask for save
+            prompt = [
+                '+-------------------------------+',
+                '|                               |',
+                '|  Close without saving? (Y|N)  |',
+                '|                               |',
+                '+-------------------------------+'
+                ]
+
+            answer = self.createPrompt(prompt)
+
+            if answer in ['Y', 'y']:
+                pass # proceed closing
+
+            elif answer in ['N', 'n']:
+                # self.log.write('closing stopped \n')
+                self.updateScreen()
+                return
+
+        # self.log.write(f'closing {answer} \n')
         self.isRunning = False
 
 
@@ -444,6 +748,8 @@ class TextRenderer(Main):
         #self.window.erase()
         #self.window.refresh()
 
+
+
         #self.log.write(f'updating! {self.scrollY}\n')
         self.updateDim()
 
@@ -451,14 +757,26 @@ class TextRenderer(Main):
 
         margin = self.getMargin()
 
+        linesColor = self.highlighter.getAllColors(self.lines)
+
+        # for l in self.linesColor:
+        #     self.log.write(str(l) + '\n')
+
+
         for y in range(self.height):
             if self.scrollY + y >= len(self.lines):
                 break
 
-            entireLine = self.lines[self.scrollY + y]
-            visibleLine = entireLine[self.scrollX:self.scrollX + self.width]
+            # entireLine = self.lines[self.scrollY + y]
 
-            self.colorPrint(visibleLine, y, resetX=margin, fullLine=True)
+            entireLineData = linesColor[self.scrollY + y]
+
+            self.preColorPrint(entireLineData, y, fullLine=True)
+
+            # visibleLine = entireLine[self.scrollX:self.scrollX + self.width]
+
+            # self.colorPrint(visibleLine, y, resetX=margin, fullLine=True)
+
 
 
             lineNumber = y + self.scrollY + 1
@@ -473,7 +791,7 @@ class TextRenderer(Main):
         msg1 = '<< option-q to quit >>'
         msg2 = '<< option-o to save >>'
 
-        buf = '-' * (self.width - len(msg1) - len(msg2) - 1)
+        buf = '-' * ((self.width + self.marginLeft) - len(msg1) - len(msg2) - 1)
 
         if buf == '':
             raise Exception('Make your window bigger (wider)')
@@ -494,6 +812,8 @@ class TextEditor(TextRenderer):
 
         self.height -= 1
 
+        self.unsavedContent = False
+
 
     def updateDim(self):
         self.height, self.width = self.window.getmaxyx()
@@ -503,7 +823,8 @@ class TextEditor(TextRenderer):
 
     def dump(self):
         if not self.pathAndFile:
-            self.log.write('pathAndFile not specified yet\n')
+            if self.inDevelopment:
+                self.log.write('pathAndFile not specified yet\n')
             sys.exit(1)
 
         # prepare
@@ -512,6 +833,8 @@ class TextEditor(TextRenderer):
 
         with open(self.pathAndFile, 'w') as f:
             f.write(text)
+
+        self.unsavedContent = False
 
         return False
 
@@ -546,10 +869,13 @@ class TextEditor(TextRenderer):
 
 
     def key(self, k):
+        self.unsavedContent = True
+
         try:
             char = bytearray([k]).decode()
         except UnicodeDecodeError:
-            self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
+            if self.inDevelopment:
+                self.log.write('UnicodeDecodeError: ' + str(k) + '\n')
             return
 
         preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX)]
@@ -570,6 +896,8 @@ class TextEditor(TextRenderer):
 
 
     def keyReturn(self):
+        self.unsavedContent = True
+
         pre = self.lines[self.y + self.scrollY][:self.x + self.scrollX] # current line
         post = self.lines[self.y + self.scrollY][self.x + self.scrollX:]
 
@@ -582,6 +910,8 @@ class TextEditor(TextRenderer):
 
 
     def keyDelete(self):
+        self.unsavedContent = True
+
         if self.x + self.scrollX > 0:
             preSection = self.lines[self.y + self.scrollY][:(self.x + self.scrollX) - 1]
             postSection = self.lines[self.y + self.scrollY][(self.x + self.scrollX):]
@@ -593,7 +923,8 @@ class TextEditor(TextRenderer):
                 maxWidth = self.scrollX + self.width
                 visibleLines = self.lines[self.scrollY:self.scrollY + self.height]
 
-                self.log.write(str(visibleLines) + '\n')
+                if self.inDevelopment:
+                    self.log.write(str(visibleLines) + '\n')
 
                 if not any([len(line) >= maxWidth for line in visibleLines]):
                     self.scrollX -= 1
@@ -612,158 +943,12 @@ class TextEditor(TextRenderer):
             if self.y + self.scrollY == len(self.lines) - 1:
                 # last line
                 self.window.erase()
+                
                 # erase() to cleanup leftovers
 
         self.lastX = self.x + self.scrollX
 
         return True
-
-
-from keyword import kwlist
-
-builtins = [
-    'ArithmeticError', 'AssertionError', 'AttributeError', 'BaseException', 
-    'BlockingIOError', 'BrokenPipeError', 'BufferError', 'BytesWarning', 
-    'ChildProcessError', 'ConnectionAbortedError', 'ConnectionError', 
-    'ConnectionRefusedError', 'ConnectionResetError', 'DeprecationWarning', 
-    'EOFError', 'Ellipsis', 'EnvironmentError', 'Exception', 'False', 
-    'FileExistsError', 'FileNotFoundError', 'FloatingPointError', 
-    'FutureWarning', 'GeneratorExit', 'IOError', 'ImportError', 
-    'ImportWarning', 'IndentationError', 'IndexError', 'InterruptedError', 
-    'IsADirectoryError', 'KeyError', 'KeyboardInterrupt', 'LookupError', 
-    'MemoryError', 'ModuleNotFoundError', 'NameError', 'None', 
-    'NotADirectoryError', 'NotImplemented', 'NotImplementedError', 'OSError', 
-    'OverflowError', 'PendingDeprecationWarning', 'PermissionError', 
-    'ProcessLookupError', 'RecursionError', 'ReferenceError', 'ResourceWarning', 
-    'RuntimeError', 'RuntimeWarning', 'StopAsyncIteration', 'StopIteration', 
-    'SyntaxError', 'SyntaxWarning', 'SystemError', 'SystemExit', 'TabError', 
-    'TimeoutError', 'True', 'TypeError', 'UnboundLocalError', 
-    'UnicodeDecodeError', 'UnicodeEncodeError', 'UnicodeError', 
-    'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning', 'ValueError', 
-    'Warning', 'ZeroDivisionError', '_', '__build_class__', '__debug__', 
-    '__doc__', '__import__', '__loader__', '__name__', '__package__', '__spec__', 
-    'abs', 'all', 'any', 'ascii', 'bin', 'bool', 'bytearray', 'bytes', 'callable',
-    'chr', 'classmethod', 'compile', 'complex', 'copyright', 'credits', 
-    'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 'exec', 'exit', 
-    'filter', 'float', 'format', 'frozenset', 'getattr', 'globals', 'hasattr', 
-    'hash', 'help', 'hex', 'id', 'input', 'int', 'isinstance', 'issubclass', 
-    'iter', 'len', 'license', 'list', 'locals', 'map', 'max', 'memoryview', 'min', 
-    'next', 'object', 'oct', 'open', 'ord', 'pow', 'print', 'property', 'quit', 
-    'range', 'repr', 'reversed', 'round', 'set', 'setattr', 'slice', 'sorted', 
-    'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'
-    ]
-
-def init(builtins):
-    global colors
-
-    colors = [
-        # (start tokens, color, type, end token)
-
-        (['class'], 52, 'between', ':('),
-        (['def'], 52, 'between', '('),
-        (['self'], 209),
-        (kwlist, 209),
-        (builtins, 52),
-        ('=-+*%^&|></~', 161),
-        ('1234567890', 7),
-        ('#', 245, 'till', '\n'),
-        ('\'\"', 11, 'till', '\'\"')
-    ]
-
-colors = None
-
-init(builtins)
-
-
-
-
-# f = open('debug.log', 'w')
-# # f.write(str(colors))
-# f.close()
-
-def getSpecial(c):
-    if len(c) <= 2:
-        return None
-    else:
-        return c[1:4]
-
-def split(line):
-    dividers = ' 1234567890(){}[]=+-*^%|?&<>.,:;@/~#\'\"'
-    
-    ls = []
-    latest = ''
-    currentDividing = False
-
-    for char in line: 
-        if char in dividers:
-            if latest != '':
-                ls.append(latest)
-            currentDividing = True
-            latest = char
-        else:
-            if currentDividing:
-                currentDividing = False
-                ls.append(latest)
-                latest = ''
-
-            latest += char
-
-    ls.append(latest)
-    return ls
-
-def getColors(line):
-    ls = split(line)
-    newLs = []
-
-    special = None
-
-    # f = open('debug.log', 'a')
-
-    # t = colors[4][0]
-    # f.write(f'update = {t}\n')
-
-    for k in ls:
-        if special:
-            type_ = special[1]
-            color = special[0]
-
-            # if type_ != 'between':
-            #     newLs.append((k, special[0]))
-
-            if k in special[2] and type_ in ['till', 'between']:
-                # end of special
-                # f.write(f'ending {special}\n')
-                special = None
-
-                if type_ != 'between':
-                    newLs.append((k, color))
-                    continue
-                else:
-                    pass # between at the end (i.e. at the end token)
-            else:
-                # not the end, i.e. middle section
-                newLs.append((k, color))
-                continue
-
-        for c in colors:
-            if k in c[0]:
-                s = getSpecial(c)
-                if s:
-                    assert s[1] in ['till', 'between']
-                    special = s
-                    # f.write(f'activating {c}, key = {k}\n')
-
-                if s and s[1] == 'between':
-                    continue
-
-                newLs.append((k, c[1]))
-                break
-        else:
-            newLs.append((k, 16))
-
-    # f.close()
-
-    return newLs
 
 
 if __name__ == '__main__':
