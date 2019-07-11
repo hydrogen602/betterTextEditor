@@ -32,122 +32,142 @@ builtins = [
     'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip'
     ]
 
-def init(builtins):
-    global colors
+colors = [
+    # (start tokens, color, type, end token)
 
-    colors = [
-        # (start tokens, color, type, end token)
-
-        (['class'], 52, 'between', ':('),
-        (['def'], 52, 'between', '('),
-        (['self'], 209),
-        (kwlist, 209),
-        (builtins, 52),
-        ('=-+*%^&|></~', 161),
-        ('1234567890', 7),
-        ('#', 245, 'till', '\n'),
-        ('\'\"', 11, 'till', '\'\"')
-    ]
-
-colors = None
-
-init(builtins)
+    (['class'], 52, 'between', ':('),
+    (['def'], 52, 'between', '('),
+    (['self'], 209),
+    (kwlist, 209),
+    (builtins, 52),
+    ('=-+*%^&|></~', 161),
+    ('1234567890', 7),
+    ('#', 245, 'till', '\n'),
+    ('\'\"', 11, 'till', '\'\"')
+]
 
 
 
 
-f = open('debug.log', 'w')
-# f.write(str(colors))
-f.close()
-
-def getSpecial(c):
-    if len(c) <= 2:
-        return None
-    else:
-        return c[1:4]
+# f = open('debug.log', 'w')
+# # f.write(str(colors))
+# f.close()
 
 
-def split(line):
-    dividers = ' 1234567890(){}[]=+-*^%|?&<>.,:;@/~#\'\"'
-    
-    ls = []
-    latest = ''
-    currentDividing = False
+class Highlighter:
 
-    for char in line: 
-        if char in dividers:
-            if latest != '':
-                ls.append(latest)
-            currentDividing = True
-            latest = char
+    def __init__(self, rules=None):
+
+        if rules:
+            self.rules = rules
         else:
-            if currentDividing:
-                currentDividing = False
-                ls.append(latest)
-                latest = ''
+            self.rules = colors
 
-            latest += char
+        self.inMultiLineComment = False
 
-    ls.append(latest)
-    return ls
 
-def getColors(line):
-    ls = split(line)
-    newLs = []
+    def getSpecial(self, c):
+        if len(c) <= 2:
+            return None
+        else:
+            return c[1:4]
 
-    special = None
 
-    # f = open('debug.log', 'a')
+    def split(self, line):
+        dividers = ' 1234567890(){}[]=+-*^%|?&<>.,:;@/~#\'\"'
+        
+        ls = []
+        latest = ''
+        currentDividing = False
 
-    t = colors[4][0]
-    # f.write(f'update = {t}\n')
+        for char in line: 
+            if char in dividers:
+                if latest != '':
+                    ls.append(latest)
+                currentDividing = True
+                latest = char
+            else:
+                if currentDividing:
+                    currentDividing = False
+                    ls.append(latest)
+                    latest = ''
 
-    for k in ls:
-        if special:
-            type_ = special[1]
-            color = special[0]
+                latest += char
 
-            # if type_ != 'between':
-            #     newLs.append((k, special[0]))
+        ls.append(latest)
+        return ls
 
-            if k in special[2] and type_ in ['till', 'between']:
-                # end of special
-                # f.write(f'ending {special}\n')
-                special = None
+    def getColors(self, line):
+        ls = self.split(line)
+        newLs = []
 
-                if type_ != 'between':
+        special = None
+
+        # f = open('debug.log', 'a')
+
+        t = colors[4][0]
+        # f.write(f'update = {t}\n')
+
+        last3 = []
+        for k in ls:
+            endedSpecial = None
+
+            last3.append(k)
+            if len(last3) > 3:
+                last3.pop(0)
+
+            if special:
+                type_ = special[1]
+                color = special[0]
+
+                # if type_ != 'between':
+                #     newLs.append((k, special[0]))
+
+                if k in special[2] and type_ in ['till', 'between']:
+                    # end of special
+                    # f.write(f'ending {special}\n')
+                    endedSpecial = special
+                    special = None
+
+                    if type_ != 'between':
+                        newLs.append((k, color))
+                        continue
+                    else:
+                        pass # between at the end (i.e. at the end token)
+                else:
+                    # not the end, i.e. middle section
                     newLs.append((k, color))
                     continue
-                else:
-                    pass # between at the end (i.e. at the end token)
+
+            if last3[1] == ['\'', '\'', '\'']: #11, 'till', '\'\"'
+                print('debug!')
+                print(last2)
+                print(endedSpecial)
+
+            for c in colors:
+                if k in c[0]:
+                    s = self.getSpecial(c)
+                    if s:
+                        assert s[1] in ['till', 'between']
+                        special = s
+                        # f.write(f'activating {c}, key = {k}\n')
+
+                    if s and s[1] == 'between':
+                        continue
+
+                    newLs.append((k, c[1]))
+                    break
             else:
-                # not the end, i.e. middle section
-                newLs.append((k, color))
-                continue
+                newLs.append((k, 16))
 
-        for c in colors:
-            if k in c[0]:
-                s = getSpecial(c)
-                if s:
-                    assert s[1] in ['till', 'between']
-                    special = s
-                    # f.write(f'activating {c}, key = {k}\n')
+        # f.close()
 
-                if s and s[1] == 'between':
-                    continue
+        return newLs
 
-                newLs.append((k, c[1]))
-                break
-        else:
-            newLs.append((k, 16))
-
-    # f.close()
-
-    return newLs
-
-def getAllColors(lines):
-    return [getColors(l) for l in lines]
+    def getAllColors(self, lines):
+        return [self.getColors(l) for l in lines]
 
 
 if __name__ == '__main__':
-    print(getColors('# t.columns'))
+    h = Highlighter()
+    print(h.getColors(' t.column\'\'\'s'))
