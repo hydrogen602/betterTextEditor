@@ -233,6 +233,8 @@ class Main():
 
         self.inDevelopment = False
 
+        self.log = None
+
         if self.inDevelopment:
             self.log = open('core.py.log', 'w')
 
