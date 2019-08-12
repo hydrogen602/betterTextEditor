@@ -12,6 +12,11 @@ class main():
     def __init__(self):
         self.window = curses.initscr()
         curses.noecho()
+        curses.start_color()
+        curses.use_default_colors()
+
+        for i in range(0, curses.COLORS):
+            curses.init_pair(i + 1, i, -1)
 
         self.height, self.width = self.window.getmaxyx()
         self.x, self.y = 0, 0
@@ -74,6 +79,9 @@ class main():
                 break
        
         self.window.addstr(str([self.height, self.width]))
+
+        for c in range(255):
+            self.window.addstr(3 + c // self.width, c % self.width, 'X', curses.color_pair(c))
 
         t = self.window.getstr()
 

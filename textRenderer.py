@@ -2,7 +2,8 @@
 from core import Main, curses
 import time
 
-from highlight_python import Highlighter
+from highlight_python import HighlighterPython
+from highlight_nasm import HighlighterNASM
 
 # Idea: make it auto detect key methods using dir() and then run
 # them using getattr()
@@ -28,7 +29,7 @@ class TextRenderer(Main):
 
         self.lengthOfFile = 0
 
-        self.highlighter = Highlighter()
+        self.highlighter = HighlighterPython()
 
         self.unsavedContent = False # always false for this class
         # altered by edit-enabled subclasses
@@ -65,6 +66,9 @@ class TextRenderer(Main):
 
         self.log.write(f'loaded: {pathAndFile}\n')
         self.log.write(f'length: {len(text)}\n')
+
+        if self.pathAndFile.endswith('.asm'):
+            self.highlighter = HighlighterNASM()
 
         self.lines = []
         for line in text:

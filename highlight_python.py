@@ -13,7 +13,7 @@ from keyword import kwlist
 # f.close()
 
 
-class Highlighter:
+class HighlighterPython:
 
     builtins = [
         'ArithmeticError', 'AssertionError', 'AttributeError', 
@@ -61,15 +61,16 @@ class Highlighter:
         ('=-+*%^&|></~', 161),
         ('1234567890', 7),
         ('#', 245, 'till', '\n'),
-        ('\'\"', 11, 'till', '\'\"')
+        ('\"', 11, 'till', '\"'),
+        ('\'', 11, 'till', '\'')
     ]
 
 
     def __init__(self, rules=None):
         if rules:
             self.rules = rules
-        else:
-            self.rules = Highlighter.colors
+        else:            
+            self.rules = HighlighterPython.colors
 
         self.multiLineComment = None
 
