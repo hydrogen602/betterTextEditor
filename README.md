@@ -10,7 +10,7 @@ Example:
 ![image failed to load](https://raw.githubusercontent.com/hydrogen602/betterTextEditor/master/images/textEditor.png)
   
 Example 2:
-![image failed to load](https://raw.githubusercontent.com/hydrogen602/betterTextEditor/master/images/assemblySyntax.png)
+![image failed to load](https://raw.githubusercontent.com/hydrogen602/betterTextEditor/master/images/AssemblySyntax3.png)
   
 ## TODO
 * Syntax highlighting for other languages like html, css, & js
