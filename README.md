@@ -9,6 +9,9 @@ when using a raspberry pi.
 Example:
 ![image failed to load](https://raw.githubusercontent.com/hydrogen602/betterTextEditor/master/images/textEditor.png)
   
+Example 2:
+![image failed to load](https://raw.githubusercontent.com/hydrogen602/betterTextEditor/master/images/assemblySyntax.png)
+  
 ## TODO
 * Syntax highlighting for other languages like html, css, & js
 * ability to change name after opening the file like in nano?
