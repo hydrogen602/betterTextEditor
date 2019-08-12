@@ -5,6 +5,8 @@
 ;     nasm -fmacho64 hello.asm && ld hello.o && ./a.out
 ; ----------------------------------------------------------------------------------------
 
+; test
+
           global    start
 
           section   .text

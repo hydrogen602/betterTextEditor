@@ -788,7 +788,7 @@ class TextRenderer(Main):
 
         self.lengthOfFile = 0
 
-        self.highlighter = Highlighter()
+        self.highlighter = HighlighterPython()
 
         self.unsavedContent = False # always false for this class
         # altered by edit-enabled subclasses
@@ -822,6 +822,9 @@ class TextRenderer(Main):
                 f.close()
 
         text = text.split('\n')
+
+        if self.pathAndFile.endswith('.asm'):
+            self.highlighter = HighlighterNASM()
 
         if self.inDevelopment:
             self.log.write(f'loaded: {pathAndFile}\n')
@@ -877,74 +880,6 @@ class TextRenderer(Main):
         if fullLine:
             filler = ' ' * (self.width - counter - 1)
             self.window.addstr(row, self.marginLeft + counter, filler, curses.color_pair(16))
-
-
-
-    # def colorPrint(self, text, row, resetX=False, fullLine=False):
-    #     if resetX: # start at the beginning of the line
-    #         prevText = ''
-    #         counter = 0
-    #     else:
-    #         prevText = self.lines[row]
-    #         counter = len(prevText)
-
-    #     if row == len(self.lines):
-    #         # new line
-    #         self.lines.append('')
-
-    #     textColorPairs = highlight_python.getColors(text)
-
-    #     breakNow = False
-
-    #     for p in textColorPairs:
-    #         txt = p[0]
-    #         color = p[1]
-
-    #         if counter + len(txt) >= self.width:
-    #             # counter + len(txt) = self.width + 1
-    #             txt = txt[:self.width - counter - 1]
-    #             breakNow = True
-
-    #         self.window.addstr(row, self.marginLeft + counter, txt, curses.color_pair(color))
-
-    #         counter += len(txt)
-
-    #         if breakNow:
-    #             break
-
-    #     if fullLine:
-    #         filler = ' ' * (self.width - counter - 1)
-    #         self.window.addstr(row, self.marginLeft + counter, filler, curses.color_pair(16))
-
-    #     if not resetX:
-    #         self.lines[row] = prevText + text
-
-
-
-    # def print(self, text, row, color=16, resetX=False, fullLine=False):
-    #     raise DeprecationWarning('not updated anymore')
-
-    #     if resetX: # start at the beginning of the line
-    #         prevText = ''
-    #         col = resetX
-    #     else:
-    #         prevText = self.lines[row]
-    #         col = len(prevText)
-
-    #     if col + len(text) >= self.width:
-    #         visibleText = text[:self.width - col - 1]
-    #     else:
-    #         visibleText = text
-
-    #     self.window.addstr(row, col, visibleText, curses.color_pair(color))
-
-    #     counter = col + len(visibleText)
-    #     if fullLine:
-    #         filler = ' ' * (self.width - counter - 1)
-    #         self.window.addstr(row, counter, filler, curses.color_pair(16))
-
-    #     if not resetX:
-    #         self.lines[row] = prevText + text
 
 
     def createPrompt(self, prompt, longAnswer=False):
