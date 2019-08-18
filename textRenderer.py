@@ -4,6 +4,7 @@ import time
 
 from highlight_python import HighlighterPython
 from highlight_nasm import HighlighterNASM
+from highlight_scala import HighlighterScala
 
 # Idea: make it auto detect key methods using dir() and then run
 # them using getattr()
@@ -69,6 +70,8 @@ class TextRenderer(Main):
 
         if self.pathAndFile.endswith('.asm'):
             self.highlighter = HighlighterNASM()
+        if self.pathAndFile.endswith('.scala'):
+            self.highlighter = HighlighterScala()
 
         self.lines = []
         for line in text:
