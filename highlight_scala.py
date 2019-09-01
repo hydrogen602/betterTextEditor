@@ -8,23 +8,29 @@ class HighlighterScala:
     ]
 
     kwlist = [
-        'val', 'var'
+        'abstract', 'case', 'catch', 'class', 'def', 'do', 'else', 'extends', 
+        'false', 'final', 'finally', 'for', 'forSome', 'if', 'implicit', 
+        'import', 'lazy', 'match', 'new', 'null', 'object', 'override', 
+        'package', 'private', 'protected', 'return', 'sealed', 'super', 
+        'this', 'throw', 'trait', 'true', 'try', 'type', 'val', 'var', 
+        'while', 'with', 'yield'
     ]
 
     colors = [
         # (start tokens, color, type, end token)
 
         #(['class'], 52, 'between', ':('),
-        #(['def'], 52, 'between', '('),
+        (['def'], 52, 'between', '(='),
         #(['self'], 209),
         (kwlist, 209),
         (builtins, 52),
-        ('=-+*%^&|></~', 161),
+        (':', 52, 'between', ',=)('),
+        ('=-+*%^&|></~⇒←#@_:', 161),
         ('1234567890', 7),
         #('#', 245, 'till', '\n'),
         ('\"', 11, 'till', '\"'),
-        ('\'', 11, 'till', '\''),
-        (':', 52, 'between', '=')
+        ('\'', 11, 'till', '\'')
+        
     ]
 
 
