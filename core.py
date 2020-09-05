@@ -62,11 +62,11 @@ class Main():
                 return 'return'
             return k
 
-        if a == [197, 147]:
+        if a == [197, 147] or a == [27, 113]: # first mac, second wsl
             return 'opt-q'
-        if a == [226, 137, 136]:
+        if a == [226, 137, 136] or a == [27, 120]: # first mac, second wsl
             return 'opt-x'
-        if a == [195, 184]:
+        if a == [195, 184] or a == [27, 111]: # first mac, second wsl
             return 'opt-o'
 
         if a == [27, 91, 66]:
@@ -77,6 +77,9 @@ class Main():
             return 'left'
         if a == [27, 91, 65]:
             return 'up'
+        
+        # if self.log:
+        #     self.log.write(str(a) + '\n')
 
         return None # unknown key
 
