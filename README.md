@@ -15,3 +15,4 @@ Example 2:
 ## TODO
 * Syntax highlighting for other languages like html, css, & js
 * ability to change name after opening the file like in nano?
+* key-combo to exit on windows (there's no option key)
